@@ -11,3 +11,4 @@ feature_config:
   use_ogd_lru_feature: false
   use_ogd_lfu_feature: false
   swf_w_lens: []
+  max_contents: int(1e6)

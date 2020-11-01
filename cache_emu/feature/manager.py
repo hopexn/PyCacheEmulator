@@ -6,27 +6,27 @@ class FeatureManager:
                  use_lru_feature=False, use_lfu_feature=False,
                  use_ogd_opt_feature=False, use_ogd_lru_feature=False, use_ogd_lfu_feature=False,
                  use_id_feature=False, use_random_feature=False,
-                 swf_w_lens=[]
+                 swf_w_lens=[], **kwargs
                  ):
         self.extractors = []
         
         if use_id_feature:
-            self.register_extractor(IdFeatureExtractor())
+            self.register_extractor(IdFeatureExtractor(**kwargs))
         if use_lru_feature:
-            self.register_extractor(LruFeatureExtractor())
+            self.register_extractor(LruFeatureExtractor(**kwargs))
         if use_lfu_feature:
-            self.register_extractor(LfuFeatureExtractor())
+            self.register_extractor(LfuFeatureExtractor(**kwargs))
         if use_ogd_opt_feature:
-            self.register_extractor(OgdOptFeatureExtractor())
+            self.register_extractor(OgdOptFeatureExtractor(**kwargs))
         if use_ogd_lru_feature:
-            self.register_extractor(OgdLruFeatureExtractor())
+            self.register_extractor(OgdLruFeatureExtractor(**kwargs))
         if use_ogd_lfu_feature:
-            self.register_extractor(OgdLfuFeatureExtractor())
+            self.register_extractor(OgdLfuFeatureExtractor(**kwargs))
         if use_random_feature:
-            self.register_extractor(RandomFeatureExtractor())
+            self.register_extractor(RandomFeatureExtractor(**kwargs))
         
         for swf_w_len in swf_w_lens:
-            self.register_extractor(SwfFeatureExtractor(swf_w_len))
+            self.register_extractor(SwfFeatureExtractor(swf_w_len, **kwargs))
     
     @property
     def dim(self):

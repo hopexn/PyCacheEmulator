@@ -53,10 +53,10 @@ class FeatureDict:
 
 
 class NpFeatureDict(FeatureDict):
-    def __init__(self, max_contents):
+    def __init__(self, max_contents: int):
         super().__init__()
         self.max_contents = max_contents
-        self.W = np.zeros(max_contents, dtype=np.float)
+        self.W = np.zeros(eval(max_contents), dtype=np.float)
     
     def div_value(self, value):
         self.W[:] /= value

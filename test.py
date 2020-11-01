@@ -17,12 +17,13 @@ info = {}
 terminal = False
 
 cnt = 0
+MOD = int(1e4)
 
 while not terminal:
     action = np.argmin(observation.flatten())
     observation, reward, terminal, info = env.step(action)
     cnt += 1
-    if cnt % 10000 == 0:
-        print(cnt / 10000, info)
+    if cnt % MOD == 0:
+        print(cnt / MOD, info)
 
 print("result:", info)
