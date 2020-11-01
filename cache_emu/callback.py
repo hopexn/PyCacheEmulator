@@ -22,9 +22,9 @@ class Callback:
 
 
 class CallbackManager:
-    def __init__(self, num_episode_steps: int):
+    def __init__(self, n_episode_steps: int = 10):
         self.callbacks = []
-        self.n_episode_steps = num_episode_steps
+        self.n_episode_steps = n_episode_steps
         self.step_count = 0
         
         assert (self.n_episode_steps > 0)

@@ -9,13 +9,13 @@ from .utils import NoneContentType
 
 
 class CacheEnv(gym.Env):
-    def __init__(self, capacity: int, data_config={}, feature_config={},
-                 callback_manager: CallbackManager = None):
+    def __init__(self, capacity: int,
+                 data_config={}, feature_config={}, callback_config={}):
         self.capacity = capacity
         self.cache = Cache(capacity=capacity)
         self.loader = RequestLoader(**data_config)
         self.feature_manger = FeatureManager(**feature_config)
-        self.callback_manager = callback_manager
+        self.callback_manager = CallbackManager(**callback_config)
         
         # 定义状态空间动作空间
         self.action_space = gym.spaces.Discrete(capacity)
@@ -36,8 +36,7 @@ class CacheEnv(gym.Env):
     
     def reset(self):
         self.cache.reset()
-        if self.callback_manager is not None:
-            self.callback_manager.reset()
+        self.callback_manager.reset()
         
         for i in range(self.capacity):
             self.cache.store(i)
@@ -80,8 +79,7 @@ class CacheEnv(gym.Env):
                     info.update({"hit_rate": self.hit_cnt / self.request_cnt})
                     return self.next_observation, self.reward, False, info
             
-            if self.callback_manager is not None:
-                self.callback_manager.on_step_end()
+            self.callback_manager.on_step_end()
             
             if not self.loader.finished():
                 self.feature_manger.update(self.req_slice.timestamps, self.req_slice.content_ids)
