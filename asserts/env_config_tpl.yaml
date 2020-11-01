@@ -20,4 +20,6 @@ feature_config:
     - 8640  #1d
     - 34560 #4d
     - 43200 #5d
-    - 51840 #6d
+    - 51840 #6d\
+callback_config:
+  enable_tqdm: True

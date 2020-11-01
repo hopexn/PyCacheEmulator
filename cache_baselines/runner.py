@@ -24,6 +24,10 @@ class CacheRunner(Thread):
         self.result = info
         return info
     
+    def close(self):
+        if self.env is not None:
+            self.env.close()
+    
     def forward(self, observation):
         raise NotImplementedError()
     

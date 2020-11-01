@@ -9,12 +9,12 @@ from .request import RequestLoader, RequestSlice
 
 class CacheEnv(gym.Env):
     def __init__(self, capacity: int,
-                 data_config={}, feature_config={}, callback_config={}):
+                 data_config={}, feature_config={}, callback_config={}, **kwargs):
         self.capacity = capacity
         self.cache = Cache(capacity=capacity)
         self.loader = RequestLoader(**data_config)
         self.feature_manger = FeatureManager(max_contents=self.loader.get_max_contents(), **feature_config)
-        self.callback_manager = CallbackManager(**callback_config)
+        self.callback_manager = CallbackManager(total_steps=self.loader.n_slices, **callback_config)
         
         # 定义状态空间动作空间
         self.action_space = gym.spaces.Discrete(capacity)
@@ -32,10 +32,12 @@ class CacheEnv(gym.Env):
         self.action = None
         self.reward = None
         self.next_observation = None
+        self.info = {}
     
     def reset(self):
         self.cache.reset()
         self.callback_manager.reset()
+        self.info.clear()
         
         for i in range(self.capacity):
             self.cache.store(i)
@@ -57,7 +59,6 @@ class CacheEnv(gym.Env):
             self.cache.evict(self.action)
             self.cache.store(self.missed_content)
         
-        info = {}
         self.reward = 0
         self.missed_content = NoneContentType
         
@@ -77,10 +78,10 @@ class CacheEnv(gym.Env):
                     self.missed_content = content_id
                     self.observation = self.next_observation
                     self.next_observation = self._get_observation()
-                    info.update({"hit_rate": self.hit_cnt / self.request_cnt})
-                    return self.next_observation, self.reward, False, info
+                    self.info.update({"hit_rate": self.hit_cnt / self.request_cnt})
+                    return self.next_observation, self.reward, False, self.info
             
-            self.callback_manager.on_step_end()
+            self.callback_manager.on_step_end(postfix=self.info)
             
             if not self.loader.finished():
                 self.feature_manger.update_batch(self.req_slice.timestamps, self.req_slice.content_ids)
@@ -88,8 +89,8 @@ class CacheEnv(gym.Env):
             else:
                 self.observation = self.next_observation
                 self.next_observation = self._get_observation()
-                info.update({"hit_rate": self.hit_cnt / self.request_cnt})
-                return self.next_observation, self.reward, True, info
+                self.info.update({"hit_rate": self.hit_cnt / self.request_cnt})
+                return self.next_observation, self.reward, True, self.info
     
     def _get_observation(self):
         content_ids = self.cache.get_contents()

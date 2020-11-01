@@ -15,11 +15,11 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 config = load_yaml(os.path.join(project_root, args.config_path))
 
 runners = [
-    RandomCacheRunner(**config),
-    LruCacheRunner(**config),
-    LfuCacheRunner(**config),
-    OgdOptCacheRunner(**config),
-    OgdLruCacheRunner(**config),
+    # RandomCacheRunner(**config),
+    # LruCacheRunner(**config),
+    # LfuCacheRunner(**config),
+    # OgdOptCacheRunner(**config),
+    # OgdLruCacheRunner(**config),
     OgdLfuCacheRunner(**config)
 ]
 
@@ -33,5 +33,8 @@ results = {}
 
 for runner in runners:
     results[runner.__class__.__name__] = runner.get_result()
+
+for runner in runners:
+    runner.close()
 
 print(pd.DataFrame(results).T)
