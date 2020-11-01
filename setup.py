@@ -5,6 +5,6 @@ setup(name='CacheEmulator',
       description='Emulator for cache.',
       author='Haopeng Yan',
       author_email='yhp9523@qq.com',
-      packages=['cache_emu', 'cache_baselines'],
+      packages=['cache_emu'],
       requires=['gym', 'numpy', 'torch'],
       )

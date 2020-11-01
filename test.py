@@ -14,19 +14,13 @@ args = parser.parse_args()
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 config = load_yaml(os.path.join(project_root, args.config_path))
 
-runners = []
-runners.append(RandomCacheRunner(**config))
-runners.append(LruCacheRunner(**config))
-runners.append(LfuCacheRunner(**config))
-runners.append(OgdOptCacheRunner(**config))
-runners.append(OgdLruCacheRunner(**config))
-runners.append(OgdLfuCacheRunner(**config))
-
-print(config['feature_config'])
+runners = [RandomCacheRunner(**config), LruCacheRunner(**config), LfuCacheRunner(**config),
+           OgdOptCacheRunner(**config), OgdLruCacheRunner(**config), OgdLfuCacheRunner(**config)]
 
 result = {}
 for runner in runners:
     res = runner.run()
-    result[runner.__class__.__name__] = res
+    runner_name = runner.__class__.__name__
+    result[runner_name] = res
 
 print(pd.DataFrame(result).T)

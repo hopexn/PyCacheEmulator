@@ -10,3 +10,16 @@ PycCacheEmulator是一个用于模拟PassiveCache的环境，其接口与OpenAI 
 - OgdLru
 - OgdLfu
 - List Wise DQN
+
+## 使用方法
+1. 环境安装
+
+```sh
+cd /path/to/PyCacheEmulator
+pip install -e .
+```
+
+2. 运行
+```sh
+python test.py -c asserts/env_config_tpl.yaml
+```
