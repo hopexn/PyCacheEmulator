@@ -27,6 +27,8 @@ class FeatureManager:
         
         for swf_w_len in swf_w_lens:
             self.register_extractor(SwfFeatureExtractor(swf_w_len, **kwargs))
+        
+        assert self.dim > 0 and "Error: feature not set!"
     
     @property
     def dim(self):

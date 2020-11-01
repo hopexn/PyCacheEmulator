@@ -1,7 +1,6 @@
 import numpy as np
 
-from .utils import NoneContentType
-
+NoneContentType = -1
 
 class Cache:
     def __init__(self, capacity: int):

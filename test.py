@@ -1,29 +1,32 @@
+import argparse
 import os
 
-import numpy as np
+import pandas as pd
 
-from cache_emu import CacheEnv, utils
+from cache_baselines import *
+from utils import load_yaml
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-c", "--config_path", type=str, help="the path of experiment config file.", required=True)
+args = parser.parse_args()
 
 # 根目录路径
-_project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+config = load_yaml(os.path.join(project_root, args.config_path))
 
-config = utils.load_yaml(os.path.join(_project_root, "asserts/env_config_tpl.yaml"))
+runners = []
+runners.append(RandomCacheRunner(**config))
+runners.append(LruCacheRunner(**config))
+runners.append(LfuCacheRunner(**config))
+runners.append(OgdOptCacheRunner(**config))
+runners.append(OgdLruCacheRunner(**config))
+runners.append(OgdLfuCacheRunner(**config))
 
-env = CacheEnv(**config)
+print(config['feature_config'])
 
-observation = env.reset()
+result = {}
+for runner in runners:
+    res = runner.run()
+    result[runner.__class__.__name__] = res
 
-info = {}
-terminal = False
-
-cnt = 0
-MOD = int(1e4)
-
-while not terminal:
-    action = np.argmin(observation.flatten())
-    observation, reward, terminal, info = env.step(action)
-    cnt += 1
-    if cnt % MOD == 0:
-        print(cnt / MOD, info)
-
-print("result:", info)
+print(pd.DataFrame(result).T)
