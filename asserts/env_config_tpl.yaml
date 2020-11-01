@@ -1,0 +1,13 @@
+capacity: 100
+data_config:
+  data_path: "asserts/request.csv"
+  time_beg: 1430668839
+  time_end: 1431878382
+  time_int: 10
+feature_config:
+  use_lru_feature: false
+  use_lfu_feature: true
+  use_ogd_opt_feature: false
+  use_ogd_lru_feature: false
+  use_ogd_lfu_feature: false
+  swf_w_lens: []
