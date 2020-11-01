@@ -3,7 +3,7 @@ import numpy as np
 
 from .cache import Cache, NoneContentType
 from .callback import CallbackManager
-from .feature import FeatureManager
+from .feature.manager import FeatureManager
 from .request import RequestLoader, RequestSlice
 
 
