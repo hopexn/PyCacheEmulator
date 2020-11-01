@@ -56,7 +56,7 @@ class NpFeatureDict(FeatureDict):
     def __init__(self, max_contents: int):
         super().__init__()
         self.max_contents = max_contents
-        self.W = np.zeros(eval(max_contents), dtype=np.float)
+        self.W = np.zeros(max_contents, dtype=np.float)
     
     def div_value(self, value):
         self.W[:] /= value
@@ -87,5 +87,8 @@ class FeatureExtractor:
         features = self.W.get_values(content_ids)
         return features.reshape((len(content_ids), self.dim))
     
-    def update(self, timestamps, content_ids):
+    def update(self, timestamp, content_id):
+        raise NotImplementedError()
+    
+    def update_batch(self, timestamps, content_ids):
         raise NotImplementedError()

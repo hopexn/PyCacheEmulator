@@ -62,3 +62,6 @@ class RequestLoader:
         req_slice = self._slices[self.i_slice]
         self.i_slice += 1
         return req_slice
+    
+    def get_max_contents(self):
+        return self.content_ids.max() + 1

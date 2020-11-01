@@ -7,10 +7,14 @@ from .common import FeatureExtractor
 
 
 class IdFeatureExtractor(FeatureExtractor):
+    
     def forward(self, content_ids):
         return np.expand_dims(content_ids, axis=-1)
     
-    def update(self, timestamps, content_ids):
+    def update(self, timestamp, content_id):
+        pass
+    
+    def update_batch(self, timestamps, content_ids):
         pass
 
 
@@ -18,15 +22,19 @@ class RandomFeatureExtractor(FeatureExtractor):
     def forward(self, content_ids):
         return np.random.random((len(content_ids), self.dim))
     
-    def update(self, timestamps, content_ids):
+    def update(self, timestamp, content_id):
+        pass
+    
+    def update_batch(self, timestamps, content_ids):
         pass
 
 
 class LfuFeatureExtractor(FeatureExtractor):
-    def update(self, timestamps, content_ids):
-        if len(timestamps) == 0:
-            return
-        self.W.add_values(content_ids, 1)
+    def update(self, timestamp, content_id):
+        self.W.add_value(content_id, 1)
+    
+    def update_batch(self, timestamps, content_ids):
+        pass
 
 
 class LruFeatureExtractor(LfuFeatureExtractor):
@@ -38,12 +46,12 @@ class LruFeatureExtractor(LfuFeatureExtractor):
         super().reset()
         self.last_time = 0
     
-    def update(self, timestamps, content_ids):
-        if len(timestamps) == 0:
-            return
-        
-        self.W.set_values(content_ids, timestamps)
-        self.last_time = timestamps[-1]
+    def update(self, timestamp, content_id):
+        self.W.set_value(content_id, timestamp)
+        self.last_time = timestamp
+    
+    def update_batch(self, timestamps, content_ids):
+        pass
 
 
 class OgdFeatureExtractor(LfuFeatureExtractor):
@@ -55,16 +63,14 @@ class OgdFeatureExtractor(LfuFeatureExtractor):
         super().reset()
         self.cnt = 0
     
-    def update(self, timestamps, content_ids):
-        n_requests = len(content_ids)
-        if n_requests == 0:
-            return
-        
+    def update(self, timestamp, content_id):
         eta = self.get_eta()
-        self.W.add_values(content_ids, eta)
+        self.W.add_value(content_id, eta)
+        self.W.div_value(1 + eta)
         self.cnt += 1
-        
-        self.W.div_value(1 + eta * n_requests)
+    
+    def update_batch(self, timestamps, content_ids):
+        pass
     
     def get_eta(self) -> float:
         raise NotImplementedError
@@ -96,15 +102,12 @@ class SwfFeatureExtractor(FeatureExtractor):
         super().reset()
         self.history = queue.Queue()
     
-    def update(self, timestamps, content_ids):
+    def update(self, timestamp, content_id):
+        self.W.add_value(content_id, 1)
+        self.n_history_requests += 1
+    
+    def update_batch(self, timestamps, content_ids):
         self.history.put(content_ids)
-        
-        if len(timestamps) == 0:
-            return
-        
-        self.W.add_values(content_ids, 1)
-        
-        self.n_history_requests += len(content_ids)
         
         if self.history.qsize() > self.history_w_len:
             old_content_ids = self.history.get()

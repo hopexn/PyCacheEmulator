@@ -14,7 +14,7 @@ class CacheEnv(gym.Env):
         self.capacity = capacity
         self.cache = Cache(capacity=capacity)
         self.loader = RequestLoader(**data_config)
-        self.feature_manger = FeatureManager(**feature_config)
+        self.feature_manger = FeatureManager(max_contents=self.loader.get_max_contents(), **feature_config)
         self.callback_manager = CallbackManager(**callback_config)
         
         # 定义状态空间动作空间
@@ -70,6 +70,8 @@ class CacheEnv(gym.Env):
                 self.hit_cnt += hit
                 self.request_cnt += 1
                 
+                self.feature_manger.update(timestamp, content_id)
+                
                 if hit:
                     self.reward += hit
                 else:
@@ -82,7 +84,7 @@ class CacheEnv(gym.Env):
             self.callback_manager.on_step_end()
             
             if not self.loader.finished():
-                self.feature_manger.update(self.req_slice.timestamps, self.req_slice.content_ids)
+                self.feature_manger.update_batch(self.req_slice.timestamps, self.req_slice.content_ids)
                 self.req_slice = self.loader.next_slice()
             else:
                 self.observation = self.next_observation

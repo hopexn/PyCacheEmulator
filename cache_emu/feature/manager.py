@@ -39,9 +39,13 @@ class FeatureManager:
     def register_extractor(self, extractor: FeatureExtractor):
         self.extractors.append(extractor)
     
-    def update(self, timestamps, content_ids):
+    def update(self, timestamp, content_id):
         for e in self.extractors:
-            e.update(timestamps, content_ids)
+            e.update(timestamp, content_id)
+    
+    def update_batch(self, timestamps, content_ids):
+        for e in self.extractors:
+            e.update_batch(timestamps, content_ids)
     
     def forward(self, content_ids):
         return np.concatenate([e.forward(content_ids) for e in self.extractors], axis=-1)
