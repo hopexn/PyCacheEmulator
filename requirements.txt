@@ -1,8 +1,12 @@
-numpy~=1.18.5
-setuptools~=46.4.0
-gym~=0.17.2
+numpy~=1.17.4
+setuptools~=50.3.0.post20201006
+gym~=0.17.1
 yaml~=0.1.7
-pyyaml~=5.3.1
-pandas~=1.0.3
+pyyaml~=5.3
+pandas~=1.0.1
 
 
+
+numba~=0.48.0
+ray~=1.0.0
+tqdm~=4.50.2

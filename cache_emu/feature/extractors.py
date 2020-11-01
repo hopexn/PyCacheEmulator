@@ -101,6 +101,7 @@ class SwfFeatureExtractor(FeatureExtractor):
     def reset(self):
         super().reset()
         self.history = queue.Queue()
+        self.n_history_requests = 0
     
     def update(self, timestamp, content_id):
         self.W.add_value(content_id, 1)
@@ -112,7 +113,9 @@ class SwfFeatureExtractor(FeatureExtractor):
         if self.history.qsize() > self.history_w_len:
             old_content_ids = self.history.get()
             self.W.add_values(old_content_ids, -1)
-            self.n_history_requests -= len(old_content_ids)
+            self.n_history_requests -= len(old_content_ids.flatten())
     
     def forward(self, content_ids):
-        return super().forward(content_ids) / (self.n_history_requests + 1e-6)
+        ret = super().forward(content_ids) / (self.n_history_requests + 1e-6)
+        assert (ret > 1).sum() == 0
+        return ret

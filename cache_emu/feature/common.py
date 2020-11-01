@@ -4,8 +4,7 @@ import numpy as np
 
 
 class FeatureDict:
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
         self.W = {}
     
     def clear(self):
@@ -14,28 +13,54 @@ class FeatureDict:
     def div_value(self, value):
         for key in self.W:
             self.W[key] /= value
-        return self
     
     def get_value(self, key):
-        return self.W[key]
+        if key in self.W:
+            return self.W[key]
+        else:
+            return 0
     
     def set_value(self, key, value):
         self.W[key] = value
     
+    def add_value(self, key, value):
+        if key in self.W:
+            self.W[key] += value
+        else:
+            self.W[key] = value
+    
     def get_values(self, keys):
         values = np.zeros(len(keys), dtype=np.float)
         for i, key in enumerate(keys):
-            if key in self.W:
-                values[i] = self.W[key]
+            values[i] = self.get_value(key)
         return values
     
-    def set_values(self, keys, values):
+    def add_values(self, keys, values):
         if isinstance(values, Iterable):
             for key, value in zip(keys, values):
-                self.W[key] = value
+                self.add_value(key, value)
         else:
             for key in keys:
-                self.W[key] = values
+                self.add_value(key, values)
+
+
+class NpFeatureDict(FeatureDict):
+    def __init__(self, max_contents, **kwargs):
+        super().__init__(**kwargs)
+        self.max_contents = max_contents
+        self.W = np.zeros(max_contents + 1, dtype=np.float)
+    
+    def clear(self):
+        self.W[:] = 0
+    
+    def div_value(self, value):
+        self.W[:] /= value
+    
+    def get_value(self, key):
+        return self.W[key]
+    
+    def get_values(self, keys):
+        return self.W[keys]
     
     def add_value(self, key, value):
         self.W[key] += value
@@ -46,30 +71,7 @@ class FeatureDict:
                 self.W[key] += value
         else:
             for key in keys:
-                if key in self.W:
-                    self.W[key] += values
-                else:
-                    self.W[key] = values
-
-
-class NpFeatureDict(FeatureDict):
-    def __init__(self, max_contents: int):
-        super().__init__()
-        self.max_contents = max_contents
-        self.W = np.zeros(max_contents, dtype=np.float)
-    
-    def div_value(self, value):
-        self.W[:] /= value
-        return self
-    
-    def get_values(self, keys):
-        return self.W[keys]
-    
-    def set_values(self, keys, values):
-        self.W[keys] = values
-    
-    def add_values(self, keys, values):
-        self.W[keys] += values
+                self.W[key] += values
 
 
 class FeatureExtractor:
@@ -78,7 +80,7 @@ class FeatureExtractor:
         if max_contents == -1:
             self.W = FeatureDict()
         else:
-            self.W = NpFeatureDict(max_contents)
+            self.W = NpFeatureDict(max_contents=max_contents)
     
     def reset(self):
         self.W.clear()
