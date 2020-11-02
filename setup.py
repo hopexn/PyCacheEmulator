@@ -6,5 +6,5 @@ setup(name='CacheEmulator',
       author='Haopeng Yan',
       author_email='yhp9523@qq.com',
       packages=['cache_emu'],
-      requires=['gym', 'numpy', 'torch'],
+      requires=['gym', 'numpy', 'torch', 'pyyaml', 'pandas'],
       )

@@ -1,7 +1,8 @@
 import gym
 import numpy as np
 
-from .cache import Cache, NoneContentType
+from .utils import NoneContentType
+from .cache import Cache
 from .callback import CallbackManager
 from .feature.manager import FeatureManager
 from .request import RequestLoader, RequestSlice
@@ -9,19 +10,24 @@ from .request import RequestLoader, RequestSlice
 
 class CacheEnv(gym.Env):
     def __init__(self, capacity: int,
-                 data_config={}, feature_config={}, callback_config={}, **kwargs):
+                 data_config={}, feature_config={}, callback_config={}, list_wise_mode=False, **kwargs):
         self.capacity = capacity
         self.cache = Cache(capacity=capacity)
         self.loader = RequestLoader(**data_config)
         self.feature_manger = FeatureManager(max_contents=self.loader.get_max_contents(), **feature_config)
         self.callback_manager = CallbackManager(total_steps=self.loader.n_slices, **callback_config)
         
+        self.list_wise_mode = list_wise_mode
+        
         # 定义状态空间动作空间
-        self.action_space = gym.spaces.Discrete(capacity)
         self.observation_space = gym.spaces.Box(
-            low=np.zeros((self.capacity, self.feature_manger.dim), dtype=np.float32),
-            high=np.ones((self.capacity, self.feature_manger.dim), dtype=np.float32)
+            low=np.zeros((self.capacity + 1, self.feature_manger.dim), dtype=np.float32),
+            high=np.ones((self.capacity + 1, self.feature_manger.dim), dtype=np.float32)
         )
+        if not self.list_wise_mode:
+            self.action_space = gym.spaces.Discrete(capacity + 1)
+        else:
+            self.action_space = gym.spaces.MultiBinary(capacity + 1)
         
         self.req_slice: RequestSlice = None
         self.missed_content = NoneContentType
@@ -37,25 +43,24 @@ class CacheEnv(gym.Env):
     def reset(self):
         self.cache.reset()
         self.callback_manager.reset()
+        self.loader.reset()
         self.info.clear()
         
         for i in range(self.capacity):
             self.cache.store(i)
         
         self.req_slice = self.loader.next_slice()
-        
-        content_ids = self.cache.get_contents()
-        self.observation = self.feature_manger.forward(content_ids)
+        self.observation = self._get_observation()
         return self.observation
     
     def close(self):
         return self.callback_manager.on_game_end()
     
     def step(self, action: int):
-        assert 0 <= action < self.capacity
+        assert 0 <= action <= self.capacity
         self.action = action
         
-        if self.missed_content != NoneContentType:
+        if self.missed_content != NoneContentType and self.action != self.capacity:
             self.cache.evict(self.action)
             self.cache.store(self.missed_content)
         
@@ -79,6 +84,10 @@ class CacheEnv(gym.Env):
                     self.observation = self.next_observation
                     self.next_observation = self._get_observation()
                     self.info.update({"hit_rate": self.hit_cnt / self.request_cnt})
+                    if self.list_wise_mode:
+                        old_reward = self.reward
+                        self.reward = self.cache.get_frequencies()
+                        assert old_reward == self.reward.sum()
                     return self.next_observation, self.reward, False, self.info
             
             self.callback_manager.on_step_end(postfix=self.info)
@@ -87,14 +96,12 @@ class CacheEnv(gym.Env):
                 self.feature_manger.update_batch(self.req_slice.timestamps, self.req_slice.content_ids)
                 self.req_slice = self.loader.next_slice()
             else:
-                self.observation = self.next_observation
-                self.next_observation = self._get_observation()
                 self.info.update({"hit_rate": self.hit_cnt / self.request_cnt})
-                return self.next_observation, self.reward, True, self.info
+                return None, None, True, self.info
     
     def _get_observation(self):
-        content_ids = self.cache.get_contents()
-        observation = self.feature_manger.forward(content_ids)
+        candidates = np.concatenate([self.cache.get_contents(), [self.missed_content]])
+        observation = self.feature_manger.forward(candidates)
         return observation
     
     def render(self, mode='human'):

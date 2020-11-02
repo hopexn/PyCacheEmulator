@@ -10,3 +10,4 @@ pandas~=1.0.1
 numba~=0.48.0
 ray~=1.0.0
 tqdm~=4.50.2
+torch~=1.4.0

@@ -2,6 +2,8 @@ from collections import Iterable
 
 import numpy as np
 
+from ..utils import NoneContentType
+
 
 class FeatureDict:
     def __init__(self, **kwargs):
@@ -15,15 +17,15 @@ class FeatureDict:
             self.W[key] /= value
     
     def get_value(self, key):
-        if key in self.W:
-            return self.W[key]
-        else:
-            return 0
+        return self.W[key] if key in self.W else 0
     
     def set_value(self, key, value):
-        self.W[key] = value
+        if key != NoneContentType:
+            self.W[key] = value
     
     def add_value(self, key, value):
+        if key == NoneContentType:
+            return
         if key in self.W:
             self.W[key] += value
         else:
@@ -57,21 +59,15 @@ class NpFeatureDict(FeatureDict):
         self.W[:] /= value
     
     def get_value(self, key):
-        return self.W[key]
+        return self.W[key] if key != NoneContentType else 0
     
-    def get_values(self, keys):
-        return self.W[keys]
+    def set_value(self, key, value):
+        if key != NoneContentType:
+            self.W[key] = value
     
     def add_value(self, key, value):
-        self.W[key] += value
-    
-    def add_values(self, keys, values):
-        if isinstance(values, Iterable):
-            for key, value in zip(keys, values):
-                self.W[key] += value
-        else:
-            for key in keys:
-                self.W[key] += values
+        if key != NoneContentType:
+            self.W[key] += value
 
 
 class FeatureExtractor:

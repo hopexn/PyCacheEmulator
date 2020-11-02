@@ -16,6 +16,9 @@ class RequestSlice:
         self.size = len(timestamps)
         self.ptr = 0
     
+    def reset(self):
+        self.ptr = 0
+    
     def finished(self):
         return self.ptr >= self.size
     
@@ -37,6 +40,14 @@ class RequestLoader:
         self._slices = self._slice_by_time(self.timestamps, self.content_ids, time_beg, time_end, time_int)
         self.i_slice = 0
         self.n_slices = len(self._slices)
+    
+    def reset(self):
+        self.i_slice = 0
+        for s in self._slices:
+            s.reset()
+    
+    def close(self):
+        pass
     
     def _slice_by_time(self, timestamps, content_ids, t_beg, t_end, t_int):
         assert t_end >= t_beg and t_int > 0 and len(timestamps) == len(content_ids)

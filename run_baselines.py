@@ -15,12 +15,14 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 config = load_yaml(os.path.join(project_root, args.config_path))
 
 runners = [
-    # RandomCacheRunner(**config),
-    # LruCacheRunner(**config),
-    # LfuCacheRunner(**config),
-    # OgdOptCacheRunner(**config),
-    # OgdLruCacheRunner(**config),
-    OgdLfuCacheRunner(**config)
+    RandomCacheRunner(**config),
+    LruCacheRunner(**config),
+    LfuCacheRunner(**config),
+    OgdLruCacheRunner(**config),
+    OgdLfuCacheRunner(**config),
+    OgdOptCacheRunner(**config),
+    SwfCacheRunner(**config),
+    EwdqnCacheRunner(**config)
 ]
 
 for runner in runners:

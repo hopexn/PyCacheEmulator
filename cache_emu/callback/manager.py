@@ -1,5 +1,3 @@
-import math
-
 from .callback import Callback
 from .tqdm_callback import TqdmCallback
 

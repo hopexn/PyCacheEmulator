@@ -113,9 +113,7 @@ class SwfFeatureExtractor(FeatureExtractor):
         if self.history.qsize() > self.history_w_len:
             old_content_ids = self.history.get()
             self.W.add_values(old_content_ids, -1)
-            self.n_history_requests -= len(old_content_ids.flatten())
+            self.n_history_requests -= old_content_ids.shape[0]
     
     def forward(self, content_ids):
-        ret = super().forward(content_ids) / (self.n_history_requests + 1e-6)
-        assert (ret > 1).sum() == 0
-        return ret
+        return super().forward(content_ids) / (self.n_history_requests + 1e-6)

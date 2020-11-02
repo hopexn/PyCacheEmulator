@@ -13,13 +13,21 @@ feature_config:
   use_ogd_lru_feature: false
   use_ogd_lfu_feature: false
   swf_w_lens:
-    - 6     #1min
-    - 60    #10min
-    - 360   #1h
-    - 1440  #4h
-    - 8640  #1d
-    - 34560 #4d
-    - 43200 #5d
-    - 51840 #6d\
+  - 1     #10s
+  - 6     #1min
+  - 30    #5min
+  - 60    #10min
+  - 180   #30min
+  - 360   #1h
+  - 720   #2h
+  - 1440  #4h
+  - 2880  #8h
+  - 8640  #1d
+  - 17280 #2d
+  - 25920 #3d
+  - 34560 #4d
+  - 43200 #5d
+  - 51840 #6d
+  - 60480 #7d
 callback_config:
-  enable_tqdm: True
+  enable_tqdm: False

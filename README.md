@@ -13,7 +13,6 @@ PycCacheEmulator是一个用于模拟PassiveCache的环境，其接口与OpenAI 
 
 ## 使用方法
 1. 环境安装
-
 ```sh
 cd /path/to/PyCacheEmulator
 pip install -e .
@@ -21,5 +20,5 @@ pip install -e .
 
 2. 运行
 ```sh
-python test.py -c asserts/env_config_tpl.yaml
+python run_baselines.py -c asserts/env_config_tpl.yaml
 ```
