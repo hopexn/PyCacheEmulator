@@ -3,10 +3,10 @@ import os
 import numpy as np
 import torch
 
-_use_gpu = False
+_use_gpu = torch.cuda.is_available()
 _gpu_id = 0
 
-device = None
+device = torch.device("cuda:" + str(_gpu_id) if _use_gpu else "cpu")
 
 # 常量
 PI = np.pi
