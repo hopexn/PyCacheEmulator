@@ -12,13 +12,33 @@ PycCacheEmulator是一个用于模拟PassiveCache的环境，其接口与OpenAI 
 - List Wise DQN
 
 ## 使用方法
+
 1. 环境安装
+
 ```sh
 cd /path/to/PyCacheEmulator
+# 安装依赖
+pip install -r requirements.txt
+# 安装cache_emu包
 pip install -e .
 ```
 
-2. 运行
+2. 运行baseline
+
 ```sh
 python run_baselines.py -c asserts/env_config_tpl.yaml
+```
+
+3. 以OpenAI Gym形式调用
+
+```python
+import cache_emu
+
+env = CacheEnv(**config) # config内容参考asserts/env_config_tpl.yaml，可使用yaml读取
+observation = env.reset()
+while not terminal:
+   action = agent.forward(observation)
+   next_observation, reward, terminal, info = env.step(action)
+   agent.backward(reward, terminal, next_observation)
+   observation = next_observation
 ```
