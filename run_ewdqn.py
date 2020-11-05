@@ -4,7 +4,7 @@ import os
 import pandas as pd
 
 from cache_baselines.runner import *
-from utils import load_yaml
+from cache_emu.utils import load_yaml
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config_path", type=str, help="the path of experiment config file.", required=True)
