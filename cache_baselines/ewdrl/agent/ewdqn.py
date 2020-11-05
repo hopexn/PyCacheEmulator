@@ -29,7 +29,7 @@ class EWVModel(RLModel):
 
 class EWDQN(Agent):
     def __init__(self, content_dim, feature_dim, memory_size=10000, batch_size=32,
-                 hidden_layer_units=[32, 8], lr=3e-4,
+                 hidden_layer_units=[256, 64, 32], lr=3e-4,
                  gamma=0.99, target_update=2, **kwargs):
         
         super().__init__(content_dim, feature_dim, **kwargs)
@@ -41,7 +41,7 @@ class EWDQN(Agent):
         self.memory = Memory(memory_size)
         
         # 动作策略参数
-        self.policy = EpsGreedyQPolicy(content_dim)
+        self.policy = GreedyQPolicy(content_dim)
         # self.policy = DecayEpsGreedyQPolicy(content_dim, eps_min=0.01)
         
         # RL超参数

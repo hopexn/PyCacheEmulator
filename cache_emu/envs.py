@@ -1,11 +1,11 @@
 import gym
 import numpy as np
 
-from .utils import NoneContentType
 from .cache import Cache
 from .callback import CallbackManager
 from .feature.manager import FeatureManager
 from .request import RequestLoader, RequestSlice
+from .utils import NoneContentType
 
 
 class CacheEnv(gym.Env):
@@ -85,19 +85,19 @@ class CacheEnv(gym.Env):
                     self.next_observation = self._get_observation()
                     self.info.update({"hit_rate": self.hit_cnt / self.request_cnt})
                     if self.list_wise_mode:
-                        old_reward = self.reward
                         self.reward = self.cache.get_frequencies()
-                        assert old_reward == self.reward.sum()
                     return self.next_observation, self.reward, False, self.info
             
-            self.callback_manager.on_step_end(postfix=self.info)
+            self.callback_manager.on_step_end(postfix=self.info.copy())
             
             if not self.loader.finished():
                 self.feature_manger.update_batch(self.req_slice.timestamps, self.req_slice.content_ids)
                 self.req_slice = self.loader.next_slice()
             else:
                 self.info.update({"hit_rate": self.hit_cnt / self.request_cnt})
-                return None, None, True, self.info
+                if self.list_wise_mode:
+                    self.reward = self.cache.get_frequencies()
+                return self.next_observation, self.reward, True, self.info
     
     def _get_observation(self):
         candidates = np.concatenate([self.cache.get_contents(), [self.missed_content]])
