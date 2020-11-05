@@ -14,14 +14,15 @@ args = parser.parse_args()
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 config = load_yaml(os.path.join(project_root, args.config_path))
 
+# 在这里选择运行的baseline
 runners = [
     RandomCacheRunner(**config),
     LruCacheRunner(**config),
     LfuCacheRunner(**config),
-    OgdLruCacheRunner(**config),
-    OgdLfuCacheRunner(**config),
+    # OgdLruCacheRunner(**config),
+    # OgdLfuCacheRunner(**config),
     OgdOptCacheRunner(**config),
-    SwfCacheRunner(**config),
+    # SwfCacheRunner(**config),
     EwdqnCacheRunner(**config)
 ]
 

@@ -114,6 +114,10 @@ class OgdLfuCacheRunner(CacheRunner):
 class EwdqnCacheRunner(CacheRunner):
     def __init__(self, capacity, **kwargs):
         super().__init__(**kwargs)
+        if "callback_config" in kwargs:
+            kwargs["callback_config"]['enable_tqdm'] = True
+        else:
+            kwargs["callback_config"] = {'enable_tqdm': True}
         self.env = CacheEnv(capacity=capacity, list_wise_mode=True, **kwargs)
         self.agent = EWDQN(content_dim=capacity, feature_dim=self.env.feature_manger.dim)
         

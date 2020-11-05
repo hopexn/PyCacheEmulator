@@ -14,15 +14,8 @@ args = parser.parse_args()
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 config = load_yaml(os.path.join(project_root, args.config_path))
 
-# runner = EwdqnCacheRunner(**config)
-# print(runner.run())
-
 runners = [
-    RandomCacheRunner(**config),
-    LruCacheRunner(**config),
-    LfuCacheRunner(**config),
-    OgdOptCacheRunner(**config),
-    OgdLruCacheRunner(**config),
+    OgdOptCacheRunner(**config),  # baseline
     EwdqnCacheRunner(**config)
 ]
 

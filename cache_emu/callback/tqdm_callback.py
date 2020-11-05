@@ -10,8 +10,8 @@ class TqdmCallback(Callback):
         self.trange = trange(self.n_episodes)
     
     def reset(self):
-        self.trange.reset()
         self.trange.clear()
+        self.trange.reset()
     
     def on_episode_end(self, description={}, postfix={}, **kwargs):
         self.trange.set_description(description)
