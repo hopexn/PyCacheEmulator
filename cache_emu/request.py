@@ -30,7 +30,7 @@ class RequestSlice:
 
 
 class RequestLoader:
-    def __init__(self, data_path: str, time_beg, time_end, time_int=60):
+    def __init__(self, data_path: str, time_beg, time_end, time_int=60, **kwargs):
         self.data = pd.read_csv(abs_path(data_path))
         
         self.n_requests = len(self.data)

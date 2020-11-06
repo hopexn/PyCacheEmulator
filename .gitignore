@@ -11,3 +11,5 @@ __pycache__
 build
 .DS_Store
 *.egg-info
+logs
+*.log

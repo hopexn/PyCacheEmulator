@@ -14,8 +14,8 @@ class CacheEnv(gym.Env):
         self.capacity = capacity
         self.cache = Cache(capacity=capacity)
         self.loader = RequestLoader(**data_config)
-        self.feature_manger = FeatureManager(max_contents=self.loader.get_max_contents(), **feature_config)
-        self.callback_manager = CallbackManager(total_steps=self.loader.n_slices, **callback_config)
+        self.feature_manger = FeatureManager(max_contents=self.loader.get_max_contents(), **feature_config, **kwargs)
+        self.callback_manager = CallbackManager(total_steps=self.loader.n_slices, **callback_config, **kwargs)
         
         self.list_wise_mode = list_wise_mode
         
@@ -31,8 +31,9 @@ class CacheEnv(gym.Env):
         
         self.req_slice: RequestSlice = None
         self.missed_content = NoneContentType
-        self.request_cnt = 0
-        self.hit_cnt = 0
+        
+        self.step_req_cnt = 0
+        self.step_hit_cnt = 0
         
         self.observation = None
         self.action = None
@@ -44,13 +45,22 @@ class CacheEnv(gym.Env):
         self.cache.reset()
         self.callback_manager.reset()
         self.loader.reset()
-        self.info.clear()
+        
+        self.step_req_cnt = 0
+        self.step_hit_cnt = 0
+        
+        self.observation = None
+        self.action = None
+        self.reward = None
+        self.next_observation = None
+        self.info = {}
         
         for i in range(self.capacity):
             self.cache.store(i)
         
         self.req_slice = self.loader.next_slice()
         self.observation = self._get_observation()
+        
         return self.observation
     
     def close(self):
@@ -72,8 +82,8 @@ class CacheEnv(gym.Env):
                 timestamp, content_id = self.req_slice.next()
                 hit = self.cache.hit_test(content_id)
                 
-                self.hit_cnt += hit
-                self.request_cnt += 1
+                self.step_hit_cnt += hit
+                self.step_req_cnt += 1
                 
                 self.feature_manger.update(timestamp, content_id)
                 
@@ -83,18 +93,18 @@ class CacheEnv(gym.Env):
                     self.missed_content = content_id
                     self.observation = self.next_observation
                     self.next_observation = self._get_observation()
-                    self.info.update({"hit_rate": self.hit_cnt / self.request_cnt})
                     if self.list_wise_mode:
                         self.reward = self.cache.get_frequencies()
+                    self.info.update(self._get_info())
                     return self.next_observation, self.reward, False, self.info
             
-            self.callback_manager.on_step_end(postfix=self.info.copy())
+            self.callback_manager.on_step_end(**self.info)
             
             if not self.loader.finished():
                 self.feature_manger.update_batch(self.req_slice.timestamps, self.req_slice.content_ids)
                 self.req_slice = self.loader.next_slice()
             else:
-                self.info.update({"hit_rate": self.hit_cnt / self.request_cnt})
+                self.info.update(self._get_info())
                 if self.list_wise_mode:
                     self.reward = self.cache.get_frequencies()
                 return self.next_observation, self.reward, True, self.info
@@ -103,6 +113,16 @@ class CacheEnv(gym.Env):
         candidates = np.concatenate([self.cache.get_contents(), [self.missed_content]])
         observation = self.feature_manger.forward(candidates)
         return observation
+    
+    def _get_info(self):
+        info = {
+            "step_req_cnt"  : self.step_req_cnt,
+            "step_hit_cnt"  : self.step_hit_cnt,
+            "missed_content": self.missed_content
+        }
+        self.step_hit_cnt = 0
+        self.step_req_cnt = 0
+        return info
     
     def render(self, mode='human'):
         pass
