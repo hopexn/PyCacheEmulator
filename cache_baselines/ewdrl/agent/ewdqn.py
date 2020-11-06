@@ -29,7 +29,7 @@ class EWVModel(RLModel):
 
 class EWDQN(Agent):
     def __init__(self, content_dim, feature_dim, memory_size=10000, batch_size=32,
-                 hidden_layer_units=[256, 64, 32], lr=3e-4,
+                 hidden_layer_units=[32, 8], lr=3e-4,
                  gamma=0.99, target_update=2, **kwargs):
         
         super().__init__(content_dim, feature_dim, **kwargs)

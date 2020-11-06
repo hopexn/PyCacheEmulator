@@ -7,3 +7,5 @@ pandas>=1.0.1
 torch~=1.4.0
 numba>=0.48.0
 enlighten>=1.6.2
+tensorboard>=1.14
+
