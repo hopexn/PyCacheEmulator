@@ -98,13 +98,14 @@ class CacheEnv(gym.Env):
                     self.info.update(self._get_info())
                     return self.next_observation, self.reward, False, self.info
             
+            self.info.update(self._get_info())
+            self._clear_cnt()
             self.callback_manager.on_step_end(**self.info)
             
             if not self.loader.finished():
                 self.feature_manger.update_batch(self.req_slice.timestamps, self.req_slice.content_ids)
                 self.req_slice = self.loader.next_slice()
             else:
-                self.info.update(self._get_info())
                 if self.list_wise_mode:
                     self.reward = self.cache.get_frequencies()
                 return self.next_observation, self.reward, True, self.info
@@ -120,9 +121,11 @@ class CacheEnv(gym.Env):
             "step_hit_cnt"  : self.step_hit_cnt,
             "missed_content": self.missed_content
         }
+        return info
+    
+    def _clear_cnt(self):
         self.step_hit_cnt = 0
         self.step_req_cnt = 0
-        return info
     
     def render(self, mode='human'):
         pass
