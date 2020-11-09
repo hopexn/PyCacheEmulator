@@ -32,4 +32,4 @@ feature_config:
     - 60480 #7d
 callback_config:
   log_config:
-    log_dir: /Users/yanhaopeng/MyProject/PyCacheEmulator/logs/0000
+    log_dir: ~

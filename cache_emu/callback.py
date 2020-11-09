@@ -130,17 +130,18 @@ class LogCallback(Callback):
         self.total_hit_cnt = 0
         self.total_req_cnt = 0
         
-        self.summary_writter = None
-        if self.log_dir is not None:
-            if not os.path.exists(self.log_dir):
-                os.system("mkdir -p {}".format(self.log_dir))
-            if not os.path.exists(self.log_dir):
-                print("Invalid path:", self.log_dir)
-            else:
-                self.summary_writter = SummaryWriter(log_dir=log_dir, flush_secs=10)
+        if self.log_dir is None:
+            self.log_dir = os.path.join(os.path.expanduser('~'), 'default_log')
         
-        self.algo_name = self.tag_dict['algo_name']
-        self.main_tag = "{}_{}".format(self.tag_dict['dataset_name'], self.tag_dict['capacity'])
+        if not os.path.exists(self.log_dir):
+            os.system("mkdir -p {}".format(self.log_dir))
+        
+        self.summary_writter = None
+        if os.path.exists(self.log_dir):
+            self.summary_writter = SummaryWriter(log_dir=self.log_dir, flush_secs=10)
+        
+        self.algo_name = kwargs.get("algo_name", "null")
+        self.main_tag = kwargs.get("tag_name", "null")
         with LogCallback._mutex:
             self.bar = LogCallback._manager.counter(
                 total=self.n_episodes, desc="{}_{}".format(self.algo_name, self.main_tag), env_info=""
@@ -181,13 +182,10 @@ class LogCallback(Callback):
         
         mean_hit_rate = self.total_hit_cnt / (self.total_req_cnt + 1e-6)
         return {
-            "mean_hit_rate": self._to_percent_str(mean_hit_rate),
+            "mean_hit_rate": "{:.1f}%".format(mean_hit_rate * 100),
             "total_hit_cnt": str(self.total_hit_cnt),
             "total_req_cnt": str(self.total_req_cnt)
         }
-    
-    def _to_percent_str(self, num):
-        return "{:.1f}%".format(num * 100)
     
     def _get_hit_rate_info(self):
         mean_hit_rate = self.total_hit_cnt / (self.total_req_cnt + 1e-6)

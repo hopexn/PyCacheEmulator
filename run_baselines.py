@@ -16,25 +16,24 @@ config = load_yaml(os.path.join(project_root, args.config_path))
 
 # 在这里选择运行的baseline
 runner_funcs = [
-    RandomCacheRunner,
+    # RandomCacheRunner,
     LruCacheRunner,
     LfuCacheRunner,
     # OgdLruCacheRunner,
     # OgdLfuCacheRunner,
-    OgdOptCacheRunner,
+    # OgdOptCacheRunner,
     # SwfCacheRunner,
-    EwdqnCacheRunner
+    # EwdqnCacheRunner
 ]
 
 runners = {}
 for r_func in runner_funcs:
     runner_name = r_func.__name__
-    tag_dict = {
-        "algo_name"   : runner_name[:-11],
-        "dataset_name": config['data_config']['name'],
-        "capacity"    : config['capacity']
+    extra_params = {
+        "algo_name": runner_name[:-11],
+        "tag_name" : "{}_{}".format(config['data_config']['name'], config['capacity'])
     }
-    runners[runner_name] = r_func(**config, tag_dict=tag_dict)
+    runners[runner_name] = r_func(**config, **extra_params)
 
 [runner.start() for runner in runners.values()]
 [runner.join() for runner in runners.values()]

@@ -38,10 +38,12 @@ class CacheRunner(Thread):
     
     def get_result(self):
         return self.result
-    
+
+
 class RandomCacheRunner(CacheRunner):
     def __init__(self, **kwargs):
         super(RandomCacheRunner, self).__init__(**kwargs)
+        kwargs = kwargs.copy()
         kwargs['feature_config'] = {'use_random_feature': True}
         self.env = CacheEnv(**kwargs)
     
@@ -52,6 +54,7 @@ class RandomCacheRunner(CacheRunner):
 class LruCacheRunner(CacheRunner):
     def __init__(self, **kwargs):
         super(LruCacheRunner, self).__init__(**kwargs)
+        kwargs = kwargs.copy()
         kwargs['feature_config'] = {'use_lru_feature': True}
         self.env = CacheEnv(**kwargs)
     
@@ -62,6 +65,7 @@ class LruCacheRunner(CacheRunner):
 class LfuCacheRunner(CacheRunner):
     def __init__(self, **kwargs):
         super(LfuCacheRunner, self).__init__(**kwargs)
+        kwargs = kwargs.copy()
         kwargs['feature_config'] = {'use_lfu_feature': True}
         self.env = CacheEnv(**kwargs)
     
@@ -82,8 +86,8 @@ class SwfCacheRunner(CacheRunner):
 class OgdOptCacheRunner(CacheRunner):
     def __init__(self, **kwargs):
         super(OgdOptCacheRunner, self).__init__(**kwargs)
+        kwargs = kwargs.copy()
         kwargs['feature_config'] = {'use_ogd_opt_feature': True}
-        
         self.env = CacheEnv(**kwargs)
     
     def forward(self, observation):
@@ -93,6 +97,7 @@ class OgdOptCacheRunner(CacheRunner):
 class OgdLruCacheRunner(CacheRunner):
     def __init__(self, **kwargs):
         super(OgdLruCacheRunner, self).__init__(**kwargs)
+        kwargs = kwargs.copy()
         kwargs['feature_config'] = {'use_ogd_lru_feature': True}
         self.env = CacheEnv(**kwargs)
     
@@ -103,6 +108,7 @@ class OgdLruCacheRunner(CacheRunner):
 class OgdLfuCacheRunner(CacheRunner):
     def __init__(self, **kwargs):
         super(OgdLfuCacheRunner, self).__init__(**kwargs)
+        kwargs = kwargs.copy()
         kwargs['feature_config'] = {'use_ogd_lfu_feature': True}
         self.env = CacheEnv(**kwargs)
     
@@ -113,10 +119,8 @@ class OgdLfuCacheRunner(CacheRunner):
 class EwdqnCacheRunner(CacheRunner):
     def __init__(self, capacity, **kwargs):
         super(EwdqnCacheRunner, self).__init__(**kwargs)
-        if "callback_config" in kwargs:
-            kwargs["callback_config"]['enable_tqdm'] = True
-        else:
-            kwargs["callback_config"] = {'enable_tqdm': True}
+        kwargs = kwargs.copy()
+        
         self.env = CacheEnv(capacity=capacity, list_wise_mode=True, **kwargs)
         self.agent = EWDQN(content_dim=capacity, feature_dim=self.env.feature_manger.dim)
         
@@ -135,4 +139,5 @@ class EwdqnCacheRunner(CacheRunner):
             self.reward = ptu.float_tensor(reward)
             self.action = ptu.tensor(self.action, dtype=torch.long)
             self.next_observation = ptu.float_tensor(next_observation)
-            self.agent.backward(self.observation, self.action, self.reward, self.next_observation)
+            return self.agent.backward(self.observation, self.action, self.reward, self.next_observation)
+        return None
