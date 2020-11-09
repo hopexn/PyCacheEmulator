@@ -34,7 +34,12 @@ python run_baselines.py -c asserts/env_config_tpl.yaml
 ```python
 import cache_emu
 
-env = CacheEnv(**config) # config内容参考asserts/env_config_tpl.yaml，可使用yaml读取
+extra_params = {
+    algo_name: "algo_name",
+    tag_name: "tag_name"
+}
+
+env = CacheEnv(**config, **extra_params) # config内容参考asserts/env_config_tpl.yaml，可使用yaml读取
 observation = env.reset()
 while not terminal:
    action = agent.forward(observation)
