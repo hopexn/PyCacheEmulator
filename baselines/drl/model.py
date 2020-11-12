@@ -7,8 +7,9 @@ from .utils import torch_utils as ptu
 
 
 class RLModel(torch.nn.Module):
-    def __init__(self, feature_dim: int, hidden_layer_units: list, lr: float, **kwargs):
+    def __init__(self, content_dim: int, feature_dim: int, hidden_layer_units: list, lr: float, **kwargs):
         super(RLModel, self).__init__()
+        self.content_dim = content_dim
         self.feature_dim = feature_dim
         self.hidden_layer_units = hidden_layer_units
         self.lr = lr
@@ -71,7 +72,7 @@ class TemperatureModel(nn.Module):
         super(TemperatureModel, self).__init__()
         
         self.min_entropy = min_entropy
-        self.log_tau = nn.Parameter(ptu.tensor(float(log_tau)))
+        self.log_tau = nn.Parameter(ptu.tensor(float(log_tau)), requires_grad=True)
         self.optim = torch.optim.Adam([self.log_tau], lr=lr)
         self.log_tau_clip = log_tau_clip
     
@@ -106,9 +107,9 @@ class TemperatureModel(nn.Module):
         return res
 
 
-class KDModel(nn.Module):
+class KDWeights(nn.Module):
     def __init__(self, num_agents, lr, alpha=1.0):
-        super(KDModel, self).__init__()
+        super(KDWeights, self).__init__()
         self.num_agents = num_agents
         self.lr = lr
         self.alpha = alpha

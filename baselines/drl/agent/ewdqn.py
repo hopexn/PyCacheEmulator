@@ -10,7 +10,7 @@ from ..utils import torch_utils as ptu
 
 class EWVModel(RLModel):
     def __init__(self, content_dim, feature_dim, hidden_layer_units: list, lr=3e-4):
-        super(EWVModel, self).__init__(feature_dim, hidden_layer_units, lr)
+        super(EWVModel, self).__init__(content_dim, feature_dim, hidden_layer_units, lr)
         self.content_dim = content_dim
         
         self.net = EWMLP(feature_dim, hidden_layer_units)

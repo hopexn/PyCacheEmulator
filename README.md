@@ -35,8 +35,8 @@ python run_baselines.py -c asserts/env_config_tpl.yaml
 import cache_emu
 
 extra_params = {
-    algo_name: "algo_name",
-    tag_name: "tag_name"
+    "main_tag": "main_tag_name",
+    "sub_tag" "sub_tag_name"
 }
 
 env = CacheEnv(**config, **extra_params) # config内容参考asserts/env_config_tpl.yaml，可使用yaml读取

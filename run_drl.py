@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from cache_baselines.runner import *
+from baselines import *
 from cache_emu.utils import load_yaml
 
 parser = argparse.ArgumentParser()
@@ -16,15 +16,15 @@ config = load_yaml(os.path.join(project_root, args.config_path))
 
 runner_funcs = [
     OgdOptCacheRunner,  # baseline
-    EwdqnCacheRunner
+    RlCacheRunner
 ]
 
 runners = {}
 for r_func in runner_funcs:
     runner_name = r_func.__name__
     extra_params = {
-        "algo_name": runner_name[:-11],
-        "tag_name" : "{}_{}".format(config['data_config']['name'], config['capacity'])
+        "main_tag": "{}_{}".format(config['data_config']['name'], config['capacity']),
+        "sub_tag" : runner_name[:-11]
     }
     runners[runner_name] = r_func(**config, **extra_params)
 

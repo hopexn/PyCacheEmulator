@@ -10,7 +10,8 @@ from .utils import NoneContentType
 
 class CacheEnv(gym.Env):
     def __init__(self, capacity: int,
-                 data_config={}, feature_config={}, callback_config={}, list_wise_mode=False, **kwargs):
+                 data_config={}, feature_config={}, callback_config={},
+                 list_wise_mode=False, **kwargs):
         self.capacity = capacity
         self.cache = Cache(capacity=capacity)
         self.loader = RequestLoader(**data_config)
@@ -32,100 +33,105 @@ class CacheEnv(gym.Env):
         self.req_slice: RequestSlice = None
         self.missed_content = NoneContentType
         
-        self.step_req_cnt = 0
-        self.step_hit_cnt = 0
-        
-        self.observation = None
-        self.action = None
-        self.reward = None
         self.next_observation = None
-        self.info = {}
-    
+        
+        self.slice_hit_cnt = 0
+        self.slice_req_cnt = 0
+        self.total_hit_cnt = 0
+        self.total_req_cnt = 0
+        
     def reset(self):
         self.cache.reset()
         self.callback_manager.reset()
         self.loader.reset()
         
-        self.step_req_cnt = 0
-        self.step_hit_cnt = 0
-        
-        self.observation = None
-        self.action = None
-        self.reward = None
         self.next_observation = None
-        self.info = {}
+        
+        self.slice_hit_cnt = 0
+        self.slice_req_cnt = 0
+        self.total_hit_cnt = 0
+        self.total_req_cnt = 0
         
         for i in range(self.capacity):
             self.cache.store(i)
         
         self.req_slice = self.loader.next_slice()
-        self.observation = self._get_observation()
         
-        return self.observation
+        return self._get_observation()
     
     def close(self):
         return self.callback_manager.on_game_end()
     
     def step(self, action: int):
         assert 0 <= action <= self.capacity
-        self.action = action
         
-        if self.missed_content != NoneContentType and self.action != self.capacity:
-            self.cache.evict(self.action)
+        if self.missed_content != NoneContentType and action != self.capacity:
+            self.cache.evict(action)
             self.cache.store(self.missed_content)
         
-        self.reward = 0
+        step_hit_cnt = 0
+        step_req_cnt = 0
         self.missed_content = NoneContentType
+        
+        info = {}
         
         while True:
             while not self.req_slice.finished():
                 timestamp, content_id = self.req_slice.next()
                 hit = self.cache.hit_test(content_id)
                 
-                self.step_hit_cnt += hit
-                self.step_req_cnt += 1
+                step_hit_cnt += hit
+                step_req_cnt += 1
+                
+                self.slice_hit_cnt += hit
+                self.slice_req_cnt += 1
+                
+                self.total_hit_cnt += hit
+                self.total_req_cnt += 1
                 
                 self.feature_manger.update(timestamp, content_id)
                 
-                if hit:
-                    self.reward += hit
-                else:
+                if not hit:
                     self.missed_content = content_id
-                    self.observation = self.next_observation
                     self.next_observation = self._get_observation()
-                    if self.list_wise_mode:
-                        self.reward = self.cache.get_frequencies()
-                    self.info.update(self._get_info())
-                    return self.next_observation, self.reward, False, self.info
+                    reward = self._get_reward()
+                    info.update({
+                        "step_req_cnt"  : step_req_cnt,
+                        "step_hit_cnt"  : step_hit_cnt,
+                        "missed_content": self.missed_content
+                    })
+                    
+                    return self.next_observation, reward, False, info
             
-            self.info.update(self._get_info())
-            self._clear_cnt()
-            self.callback_manager.on_step_end(**self.info)
+            
+            self.callback_manager.on_step_end(slice_hit_cnt=self.slice_hit_cnt, slice_req_cnt=self.slice_req_cnt)
+            self.slice_hit_cnt = 0
+            self.slice_req_cnt = 0
             
             if not self.loader.finished():
                 self.feature_manger.update_batch(self.req_slice.timestamps, self.req_slice.content_ids)
                 self.req_slice = self.loader.next_slice()
             else:
-                if self.list_wise_mode:
-                    self.reward = self.cache.get_frequencies()
-                return self.next_observation, self.reward, True, self.info
+                self.next_observation = self._get_observation()
+                reward = self._get_reward()
+                info.update({
+                    "total_req_cnt": self.total_req_cnt,
+                    "total_hit_cnt": self.total_hit_cnt,
+                    "mean_hit_rate": "{:.1f}%".format(100 * self.total_hit_cnt / (self.total_req_cnt + 1e-6))
+                })
+                return self.next_observation, reward, True, info
     
     def _get_observation(self):
         candidates = np.concatenate([self.cache.get_contents(), [self.missed_content]])
         observation = self.feature_manger.forward(candidates)
         return observation
     
-    def _get_info(self):
-        info = {
-            "step_req_cnt"  : self.step_req_cnt,
-            "step_hit_cnt"  : self.step_hit_cnt,
-            "missed_content": self.missed_content
-        }
-        return info
-    
-    def _clear_cnt(self):
-        self.step_hit_cnt = 0
-        self.step_req_cnt = 0
+    def _get_reward(self):
+        reward = self.cache.get_frequencies()
+        if not self.list_wise_mode:
+            return reward.sum()
+        else:
+            return reward
     
     def render(self, mode='human'):
         pass
