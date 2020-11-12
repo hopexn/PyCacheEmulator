@@ -87,10 +87,12 @@ class LogCallback(Callback):
     _mutex = threading.Lock()
     _writter: SummaryWriter = None
     
-    def __init__(self, n_step_per_episode=1000, log_dir=None, log_id=0, main_tag="", sub_tag="", **kwargs):
+    def __init__(self, n_step_per_episode=1000, log_dir=None, log_id=0, main_tag="", sub_tag="",
+                 verbose=False, **kwargs):
         super(LogCallback, self).__init__(n_step_per_episode, **kwargs)
         self.main_tag = main_tag
         self.sub_tag = sub_tag
+        self.verbose = verbose
         
         self.episode_hit_cnt = 0
         self.episode_req_cnt = 0
@@ -131,6 +133,9 @@ class LogCallback(Callback):
                 global_step=self.i_episode,
                 walltime=self.i_episode
             )
+        if self.verbose:
+            with LogCallback._mutex:
+                print("{},{}_{}: {}".format(self.i_episode, tag_prefix, self.main_tag, scalar_dict))
     
     def on_game_end(self, **kwargs):
         with LogCallback._mutex:

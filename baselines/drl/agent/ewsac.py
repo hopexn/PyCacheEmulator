@@ -9,8 +9,8 @@ from ..utils import torch_utils as ptu
 
 
 class EWSacPiModel(RLModel):
-    def __init__(self, feature_dim, hidden_layer_units: list, lr, log_std_min=-10, log_std_max=2):
-        super(EWSacPiModel, self).__init__(feature_dim, hidden_layer_units, lr)
+    def __init__(self, content_dim, feature_dim, hidden_layer_units: list, lr, log_std_min=-10, log_std_max=2):
+        super(EWSacPiModel, self).__init__(content_dim, feature_dim, hidden_layer_units, lr)
         
         self.net = GaussianEWMLP(feature_dim, hidden_layer_units, log_std_min, log_std_max)
         self.optim = torch.optim.Adam(self.net.parameters(), self.lr)
@@ -56,8 +56,8 @@ class EWSacPiModel(RLModel):
 
 
 class EWSacQModel(RLModel):
-    def __init__(self, feature_dim, hidden_layer_units: list, lr=3e-4):
-        super(EWSacQModel, self).__init__(feature_dim, hidden_layer_units, lr)
+    def __init__(self, content_dim, feature_dim, hidden_layer_units: list, lr=3e-4):
+        super(EWSacQModel, self).__init__(content_dim, feature_dim, hidden_layer_units, lr)
         
         self.net = EWMLP(feature_dim, hidden_layer_units)
         self.optim = torch.optim.Adam(self.net.parameters(), self.lr)
@@ -80,10 +80,10 @@ class EWSAC(Agent):
         super().__init__(content_dim, feature_dim, **kwargs)
         
         # 创建Actor网络
-        self.pi_model = EWSacPiModel(feature_dim, hidden_layer_units, lr)
+        self.pi_model = EWSacPiModel(content_dim, feature_dim, hidden_layer_units, lr)
         
         # 创建Critic网络
-        self.q_model = EWSacQModel(feature_dim + 1, hidden_layer_units, lr)
+        self.q_model = EWSacQModel(content_dim, feature_dim + 1, hidden_layer_units, lr)
         self.target_q_model = copy.deepcopy(self.q_model)
         
         # 动作策略参数

@@ -33,3 +33,6 @@ feature_config:
 callback_config:
   log_config:
     log_dir: ~/default_log
+agent_class: EWDQN
+agent_kwargs: { }
+verbose: true

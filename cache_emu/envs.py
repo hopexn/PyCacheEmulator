@@ -39,7 +39,7 @@ class CacheEnv(gym.Env):
         self.slice_req_cnt = 0
         self.total_hit_cnt = 0
         self.total_req_cnt = 0
-        
+    
     def reset(self):
         self.cache.reset()
         self.callback_manager.reset()
@@ -103,7 +103,6 @@ class CacheEnv(gym.Env):
                     
                     return self.next_observation, reward, False, info
             
-            
             self.callback_manager.on_step_end(slice_hit_cnt=self.slice_hit_cnt, slice_req_cnt=self.slice_req_cnt)
             self.slice_hit_cnt = 0
             self.slice_req_cnt = 0
@@ -127,7 +126,8 @@ class CacheEnv(gym.Env):
         return observation
     
     def _get_reward(self):
-        reward = self.cache.get_frequencies()
+        candidates = np.concatenate([self.cache.get_contents(), [self.missed_content]])
+        reward = self.cache.get_frequencies(candidates)
         if not self.list_wise_mode:
             return reward.sum()
         else:

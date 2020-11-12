@@ -11,8 +11,8 @@ from ..utils import torch_utils as ptu
 
 
 class EWSqlPiModel(RLModel):
-    def __init__(self, feature_dim, hidden_layer_units: list, lr, use_kl_div_loss=False):
-        super(EWSqlPiModel, self).__init__(feature_dim, hidden_layer_units, lr)
+    def __init__(self, content_dim, feature_dim, hidden_layer_units: list, lr, use_kl_div_loss=False):
+        super(EWSqlPiModel, self).__init__(content_dim, feature_dim, hidden_layer_units, lr)
         
         self.net = EWMLP(feature_dim, hidden_layer_units)
         self.optim = torch.optim.Adam(self.net.parameters(), self.lr)
@@ -69,8 +69,8 @@ class EWSqlPiModel(RLModel):
 
 
 class EWSqlQModel(RLModel):
-    def __init__(self, feature_dim, hidden_layer_units: list, lr):
-        super(EWSqlQModel, self).__init__(feature_dim, hidden_layer_units, lr)
+    def __init__(self, content_dim, feature_dim, hidden_layer_units: list, lr):
+        super(EWSqlQModel, self).__init__(content_dim, feature_dim, hidden_layer_units, lr)
         
         self.net = ptu.build_mlp(feature_dim, hidden_layer_units, 2)
         self.optim = torch.optim.Adam(self.net.parameters(), self.lr)
@@ -96,11 +96,11 @@ class EWSQL2(Agent):
         # 策略函数
         print("Pi use kl div loss: ", use_kl_div_loss)
         
-        self.pi_model = EWSqlPiModel(feature_dim, hidden_layer_units, lr, use_kl_div_loss=use_kl_div_loss)
+        self.pi_model = EWSqlPiModel(content_dim, feature_dim, hidden_layer_units, lr, use_kl_div_loss=use_kl_div_loss)
         self.target_pi_model = copy.deepcopy(self.pi_model)
         
         # Q值函数
-        self.q_model = EWSqlQModel(feature_dim, hidden_layer_units, lr)
+        self.q_model = EWSqlQModel(content_dim, feature_dim, hidden_layer_units, lr)
         self.target_q_model = copy.deepcopy(self.q_model)
         
         # 策略函数
