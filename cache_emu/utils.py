@@ -16,6 +16,6 @@ def abs_path(*path):
 
 # 加载yaml配置文件
 def load_yaml(path):
-    with open(abs_path(path), 'r', encoding="utf-8") as f:
+    with open(path, 'r', encoding="utf-8") as f:
         config_data = yaml.full_load(f)
     return config_data

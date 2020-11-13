@@ -3,9 +3,8 @@ import os
 
 import pandas as pd
 
-from baselines import *
-from cache_emu.utils import load_yaml
-
+from cache_emu import *
+from drl_agent import RlCacheRunner
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config_path", type=str, help="the path of experiment config file.", required=True)
 args = parser.parse_args()
@@ -28,11 +27,7 @@ runner_funcs = [
 runners = {}
 for r_func in runner_funcs:
     runner_name = r_func.__name__
-    extra_params = {
-        "main_tag": "{}_{}".format(config['data_config']['name'], config['capacity']),
-        "sub_tag" : runner_name[:-11]
-    }
-    runners[runner_name] = r_func(**config, **extra_params)
+    runners[runner_name] = r_func(**config)
 
 [runner.start() for runner in runners.values()]
 [runner.join() for runner in runners.values()]

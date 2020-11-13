@@ -2,8 +2,7 @@ from .extractors import *
 
 
 class FeatureManager:
-    def __init__(self,
-                 use_lru_feature=False, use_lfu_feature=False,
+    def __init__(self, use_lru_feature=False, use_lfu_feature=False,
                  use_ogd_opt_feature=False, use_ogd_lru_feature=False, use_ogd_lfu_feature=False,
                  use_id_feature=False, use_random_feature=False,
                  swf_w_lens=[], **kwargs

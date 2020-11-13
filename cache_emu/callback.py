@@ -33,13 +33,9 @@ class Callback:
 
 
 class CallbackManager:
-    def __init__(self, callbacks=[], log_config={}, **kwargs):
+    def __init__(self, log_config={}, **kwargs):
         self.callbacks = []
         self.i_step = 0
-        
-        for cb in callbacks:
-            assert isinstance(cb, Callback)
-            self.callbacks.append(cb)
         
         self.register_callback(LogCallback(**log_config, **kwargs))
     

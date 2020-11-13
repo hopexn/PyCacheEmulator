@@ -10,25 +10,19 @@ from .utils import NoneContentType
 
 class CacheEnv(gym.Env):
     def __init__(self, capacity: int,
-                 data_config={}, feature_config={}, callback_config={},
-                 list_wise_mode=False, **kwargs):
+                 data_config={}, feature_config={}, callback_config={}, **kwargs):
         self.capacity = capacity
         self.cache = Cache(capacity=capacity)
         self.loader = RequestLoader(**data_config)
         self.feature_manger = FeatureManager(max_contents=self.loader.get_max_contents(), **feature_config, **kwargs)
         self.callback_manager = CallbackManager(total_steps=self.loader.n_slices, **callback_config, **kwargs)
         
-        self.list_wise_mode = list_wise_mode
-        
         # 定义状态空间动作空间
         self.observation_space = gym.spaces.Box(
             low=np.zeros((self.capacity + 1, self.feature_manger.dim), dtype=np.float32),
             high=np.ones((self.capacity + 1, self.feature_manger.dim), dtype=np.float32)
         )
-        if not self.list_wise_mode:
-            self.action_space = gym.spaces.Discrete(capacity + 1)
-        else:
-            self.action_space = gym.spaces.MultiBinary(capacity + 1)
+        self.action_space = gym.spaces.Discrete(capacity + 1)
         
         self.req_slice: RequestSlice = None
         self.missed_content = NoneContentType
@@ -126,12 +120,20 @@ class CacheEnv(gym.Env):
         return observation
     
     def _get_reward(self):
-        candidates = np.concatenate([self.cache.get_contents(), [self.missed_content]])
-        reward = self.cache.get_frequencies(candidates)
-        if not self.list_wise_mode:
-            return reward.sum()
-        else:
-            return reward
+        return self.cache.get_frequencies().sum()
     
     def render(self, mode='human'):
         pass
+
+
+class ListWiseCacheEnv(CacheEnv):
+    def __init__(self, capacity: int, data_config={}, feature_config={}, callback_config={}, **kwargs):
+        super().__init__(capacity, data_config, feature_config, callback_config, **kwargs)
+        self.action_space = gym.spaces.MultiDiscrete(self.capacity + 1)
+    
+    def step(self, action):
+        return super().step(np.argmin(action))
+    
+    def _get_reward(self):
+        candidates = np.concatenate([self.cache.get_contents(), [self.missed_content]])
+        return self.cache.get_frequencies(candidates)
