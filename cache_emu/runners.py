@@ -21,6 +21,8 @@ class CacheRunner(Thread):
         
         self.main_tag = "{}_{}".format(self.data_config.get("name", ""), self.capacity)
         self.sub_tag = self.__class__.__name__
+        if self.sub_tag[-11:] == "CacheRunner":
+            self.sub_tag = self.sub_tag[:-11]
         
         # 用于保存线程运行结果
         self.info = {}

@@ -14,16 +14,17 @@ class RlCacheRunner(CacheRunner):
         if self.feature_config is None:
             self.feature_config = DEFAULT_DRL_FEATURE_CONFIG
         
+        self.agent_config = kwargs.pop("agent_config", DEFAULT_DRL_AGENT_CONFIG)
+        agent_class_name = self.agent_config.get("class_name", "EWDQN")
+        
+        self.sub_tag = agent_class_name
         self.env = ListWiseCacheEnv(
             capacity=capacity,
             data_config=self.data_config, feature_config=self.feature_config,
             main_tag=self.main_tag, sub_tag=self.sub_tag,
             **kwargs)
         
-        self.agent_config = kwargs.pop("agent_config", DEFAULT_DRL_AGENT_CONFIG)
-        agent_class = eval_agent_class(self.agent_config.get("agent_class", "EWDQN"))
-        
-        self.agent = agent_class(
+        self.agent = eval_agent_class(agent_class_name)(
             content_dim=capacity, feature_dim=self.env.feature_manger.dim,
             **self.agent_config, **kwargs)
         

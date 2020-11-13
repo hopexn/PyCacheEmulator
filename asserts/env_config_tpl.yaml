@@ -1,2 +1,4 @@
 capacity: 10
 verbose: true
+agent_config:
+  class_name: "EWSQL"
