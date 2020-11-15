@@ -4,7 +4,7 @@ import torch
 
 from ..core import Agent
 from ..memory import Memory
-from ..model import RLModel, TemperatureModel
+from ..model import RLModel, Temperature
 from ..nn import EWMLP
 from ..policy import *
 from ..utils import torch_utils as ptu
@@ -119,7 +119,7 @@ class EWSQL2(Agent):
         self.batch_size = batch_size
         
         # 设置最小熵为 ratio * max_entropy, 其中 max_entropy = log(content_dim)
-        self.tau = TemperatureModel(log_tau=log_tau, min_entropy=min_entropy_ratio * np.log(content_dim + 1))
+        self.tau = Temperature(log_tau=log_tau, min_entropy=min_entropy_ratio * np.log(content_dim + 1))
         # 更新温度的频率，值为0时温度为定值
         self.update_tau_freq = update_tau_freq
         

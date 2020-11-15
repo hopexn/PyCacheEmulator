@@ -4,7 +4,7 @@ import torch
 
 from .ewdqn import EWDQN
 from ..memory import Memory
-from ..model import RLModel, TemperatureModel
+from ..model import RLModel, Temperature
 from ..nn import EWMLP
 from ..policy import *
 from ..utils import torch_utils as ptu
@@ -91,8 +91,8 @@ class EWSQL(EWDQN):
         self.batch_size = batch_size
         
         # 设置最小熵为 ratio * max_entropy, 其中 max_entropy = log(content_dim)
-        self.tau = TemperatureModel(log_tau=log_tau, min_entropy=min_entropy_ratio * np.log(2),
-                                    log_tau_clip=log_tau_clip)
+        self.tau = Temperature(log_tau=log_tau, min_entropy=min_entropy_ratio * np.log(2),
+                               log_tau_clip=log_tau_clip)
         # 更新温度的频率，值为0时温度为定值
         self.update_tau_freq = update_tau_freq
         
@@ -101,7 +101,7 @@ class EWSQL(EWDQN):
         if distilling_pi_model:
             self.distilling_model = self.pi_model
         else:
-            self.distilling_model = self.v_model
+            self.distilling_model = self.q_model
     
     def forward(self, observation):
         with torch.no_grad():
@@ -135,17 +135,17 @@ class EWSQL(EWDQN):
         actions = actions.unsqueeze(-1)
         
         with torch.no_grad():
-            next_state_values = self.target_v_model.forward_target(next_observations)
+            next_state_values = self.target_q_model.forward_target(next_observations)
             target_q_values = rewards + self.gamma * next_state_values
             
             entropy = self.target_pi_model.entropy(observations).gather(dim=-1, index=actions).squeeze(-1)
             target_q_values = target_q_values + self.tau * entropy
         
         # update q model
-        v_loss = self.v_model.fit(observations[:, :self.content_dim], target_q_values[:, :self.content_dim])
+        v_loss = self.q_model.fit(observations[:, :self.content_dim], target_q_values[:, :self.content_dim])
         
         # update policy
-        state_values = self.target_v_model(observations)
+        state_values = self.target_q_model(observations)
         pi_loss = self.pi_model.backward(observations, actions, target_q_values, state_values, self.tau.value())
         
         info = {"v_loss": v_loss, "pi_loss": pi_loss}
@@ -161,10 +161,10 @@ class EWSQL(EWDQN):
     
     def _update_target(self):
         if self.target_update > 1 and self.update_count % self.target_update == 0:
-            ptu.copy_model_params_from_to(self.v_model, self.target_v_model)
+            ptu.copy_model_params_from_to(self.q_model, self.target_q_model)
             ptu.copy_model_params_from_to(self.pi_model, self.target_pi_model)
         else:
-            ptu.soft_update_from_to(self.v_model, self.target_v_model, self.target_update)
+            ptu.soft_update_from_to(self.q_model, self.target_q_model, self.target_update)
             ptu.soft_update_from_to(self.pi_model, self.target_pi_model, self.target_update)
     
     def save_weights(self, path, prefix="", suffix=""):

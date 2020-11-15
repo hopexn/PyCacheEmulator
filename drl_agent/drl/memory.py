@@ -44,6 +44,8 @@ class Memory:
         return observations, actions, rewards, next_observations
     
     def sample_observations(self, batch_size=32):
+        if self.__len__() == 0:
+            return None
         indices = self._sample_indices(batch_size)
         observations = torch.cat([self.observations[i] for i in indices], dim=0)
         return observations

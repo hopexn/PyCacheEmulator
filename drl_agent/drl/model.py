@@ -67,9 +67,9 @@ class RLModel(torch.nn.Module):
         return res1 and res2
 
 
-class TemperatureModel(nn.Module):
-    def __init__(self, log_tau, min_entropy, lr=5e-5, log_tau_clip=(-4, 1)):
-        super(TemperatureModel, self).__init__()
+class Temperature(nn.Module):
+    def __init__(self, log_tau, min_entropy, lr=3e-4, log_tau_clip=(-4, 1)):
+        super(Temperature, self).__init__()
         
         self.min_entropy = min_entropy
         self.log_tau = nn.Parameter(ptu.tensor(float(log_tau)), requires_grad=True)
@@ -86,7 +86,7 @@ class TemperatureModel(nn.Module):
         return torch.exp(self.log_tau.clamp(*self.log_tau_clip))
     
     def backward(self, probs):
-        tau = torch.exp(self.log_tau.clamp(*self.log_tau_clip))
+        tau = self.value()
         # 为了避免log(probs)出现nan, probs需要加上eps
         entropy = -(probs * torch.log(probs + 1e-6)).sum(dim=-1).mean()
         tau_loss = tau * (entropy.detach() - self.min_entropy)
@@ -95,39 +95,39 @@ class TemperatureModel(nn.Module):
         tau_loss.backward()
         self.optim.step()
         
-        return {"tau"     : tau.cpu().item(),
-                "entropy" : entropy.cpu().item(),
-                "tau_loss": tau_loss.cpu().item()}
+        return {"tau_value": tau.cpu().item(),
+                "entropy"  : entropy.cpu().item(),
+                "tau_loss" : tau_loss.cpu().item()}
     
     def save_weights(self, path, prefix="", suffix=""):
-        ptu.save_model(self, os.path.join(path, prefix + "tau" + suffix + ".pt"))
+        ptu.save_model(self, os.path.join(path, prefix + "temperature" + suffix + ".pt"))
     
     def load_weights(self, path, prefix="", suffix=""):
-        res = ptu.load_model(self, os.path.join(path, prefix + "tau" + suffix + ".pt"))
+        res = ptu.load_model(self, os.path.join(path, prefix + "temperature" + suffix + ".pt"))
         return res
 
 
 class KDWeights(nn.Module):
-    def __init__(self, num_agents, lr, alpha=1.0):
+    def __init__(self, num_agents, lr, log_tau=1.0, **kwargs):
         super(KDWeights, self).__init__()
         self.num_agents = num_agents
         self.lr = lr
-        self.alpha = alpha
         
+        self.tau = Temperature(log_tau=log_tau, **kwargs)
         self.ws = nn.Parameter(ptu.ones(num_agents, dtype=torch.float), requires_grad=True)
         self.optim = torch.optim.Adam([self.ws], lr=lr)
     
     def forward(self, losses: list):
-        softmax_ws = self.ws.softmax(dim=0)
+        softmax_ws = (self.ws / self.tau.value()).softmax(dim=0)
         
         loss = 0
         for i in range(self.num_agents):
             loss = loss + softmax_ws[i] * losses[i]
-        loss = loss + self.alpha * (torch.dot(softmax_ws, softmax_ws.log()))
+        loss = loss + self.tau * (torch.dot(softmax_ws, softmax_ws.log()))
         return loss
     
-    def forward2(self, losses: list, k):
-        softmax_ws = self.ws.softmax(dim=0)
+    def forward_topk(self, losses: list, k):
+        softmax_ws = (self.ws / self.tau.value()).softmax(dim=0)
         
         loss = 0
         indices = torch.argsort(softmax_ws, descending=True).cpu().numpy()

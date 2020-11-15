@@ -1,3 +1,4 @@
+from .agent.ewdnn import EWDNN
 from .agent.ewdqn import EWDQN
 from .agent.ewsac import EWSAC
 from .agent.ewsql import EWSQL

@@ -129,8 +129,7 @@ class LogCallback(Callback):
                 global_step=self.i_episode,
                 walltime=self.i_episode
             )
-        if self.verbose:
-            with LogCallback._mutex:
+            if self.verbose:
                 print("{},{}_{}: {}".format(self.i_episode, tag_prefix, self.main_tag, scalar_dict))
     
     def on_game_end(self, **kwargs):
