@@ -14,15 +14,16 @@ args = parser.parse_args()
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 config = load_yaml(os.path.join(project_root, args.config_path))
 
+runner_ranks = range(3)
 runner_funcs = [
-    # OgdOptCacheRunner,  # baseline
     RlCacheRunner
 ]
 
 runners = {}
 for r_func in runner_funcs:
-    runner_name = r_func.__name__
-    runners[runner_name] = r_func(**config)
+    for rank in runner_ranks:
+        runner_name = "{}[{}]".format(r_func.__name__, rank)
+        runners[runner_name] = r_func(**config, rank=rank)
 
 [runner.start() for runner in runners.values()]
 [runner.join() for runner in runners.values()]

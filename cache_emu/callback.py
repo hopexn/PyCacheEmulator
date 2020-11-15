@@ -124,13 +124,13 @@ class LogCallback(Callback):
     def _write_scalars(self, tag_prefix, scalar_dict):
         with LogCallback._mutex:
             LogCallback._writter.add_scalars(
-                main_tag="{}_{}".format(tag_prefix, self.main_tag),
+                main_tag="{}/{}".format(tag_prefix, self.main_tag),
                 tag_scalar_dict=scalar_dict,
                 global_step=self.i_episode,
                 walltime=self.i_episode
             )
             if self.verbose:
-                print("{},{}_{}: {}".format(self.i_episode, tag_prefix, self.main_tag, scalar_dict))
+                print("{},{}/{}: {}".format(self.i_episode, tag_prefix, self.main_tag, scalar_dict))
     
     def on_game_end(self, **kwargs):
         with LogCallback._mutex:
