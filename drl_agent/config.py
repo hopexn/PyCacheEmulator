@@ -6,3 +6,11 @@ DEFAULT_DRL_AGENT_CONFIG = {
     'class_name': 'EWDQN',
     'kwargs'    : {}
 }
+
+DEFAULT_DISTILLING_CONFIG = {
+    'class_name': "HardKDCallback",
+    'batch_size': 128,
+    'tau'       : 0,
+    'lr'        : 0.01,
+    'interval'  : 10
+}

@@ -14,7 +14,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 config = proj_utils.load_yaml(os.path.join(project_root, args.config_path))
 
 # 在这里选择运行的baseline
-runner_ranks = range(3)
+comm_size = config.get("com_size", 7)
+runner_ranks = range(comm_size)
 runner_funcs = [
     RandomCacheRunner,
     LruCacheRunner,
@@ -28,8 +29,9 @@ runner_funcs = [
 runners = {}
 for r_func in runner_funcs:
     for rank in runner_ranks:
-        runner_name = "{}[{}]".format(r_func.__name__, rank)
-        runners[runner_name] = r_func(**config, rank=rank)
+        runner = r_func(**config, rank=rank)
+        runner_name = "{}/{}".format(runner.main_tag, runner.sub_tag)
+        runners[runner_name] = runner
 
 [runner.start() for runner in runners.values()]
 [runner.join() for runner in runners.values()]

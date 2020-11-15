@@ -43,10 +43,11 @@ def get_device():
     tid = threading.get_ident()
     if tid not in _device_map:
         with _mutex:
-            if len(_devices) == 0:
-                init_torch_devices()
-            _device_map[tid] = _devices[_num_threads % len(_devices)]
-            _num_threads += 1
+            if tid not in _device_map:
+                if len(_devices) == 0:
+                    init_torch_devices()
+                _device_map[tid] = _devices[_num_threads % len(_devices)]
+                _num_threads += 1
     return _device_map[tid]
 
 

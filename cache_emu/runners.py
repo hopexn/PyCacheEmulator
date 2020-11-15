@@ -20,7 +20,7 @@ class CacheRunner(threading.Thread):
         self.data_config = kwargs.pop("data_config", IQIYI_DATA_CONFIG)
         self.feature_config = kwargs.pop("feature_config", None)
         
-        self.main_tag = "{}[{}]/{}".format(
+        self.main_tag = "{}/{}/{}".format(
             self.data_config.get("name", ""),
             kwargs.get("rank", 0),
             self.capacity,

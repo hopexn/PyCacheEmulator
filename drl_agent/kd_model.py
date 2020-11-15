@@ -44,7 +44,7 @@ class KDModel(nn.Module):
         self.optim.step()
     
     def get_dict(self):
-        softmax_ws = self.ws.softmax(dim=0).cpu()
+        softmax_ws = ptu.get_numpy(self.ws.softmax(dim=0))
         return {"KDW{}".format(i): w for i, w in enumerate(softmax_ws)}
     
     def save_weights(self, path, prefix="", suffix=""):
