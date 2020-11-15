@@ -4,7 +4,6 @@ import os
 import pandas as pd
 
 from cache_emu import *
-from cache_emu.utils import proj_utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config_path", type=str, help="the path of experiment config file.", required=True)

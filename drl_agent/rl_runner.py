@@ -1,10 +1,10 @@
 import torch
 
 from cache_emu import ListWiseCacheEnv
+from cache_emu import torch_utils as ptu
 from cache_emu.runners import CacheRunner
 from .config import DEFAULT_DRL_FEATURE_CONFIG, DEFAULT_DRL_AGENT_CONFIG
 from .drl import eval_agent_class
-from .drl.utils import torch_utils as ptu
 
 
 class RlCacheRunner(CacheRunner):
