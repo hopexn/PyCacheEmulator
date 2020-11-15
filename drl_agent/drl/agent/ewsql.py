@@ -7,7 +7,8 @@ from ..memory import Memory
 from ..model import RLModel, Temperature
 from ..nn import EWMLP
 from ..policy import *
-from ..utils import torch_utils as ptu
+from cache_emu.utils import torch_utils as ptu
+
 
 
 class EWSqlPiModel(RLModel):

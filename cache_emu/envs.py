@@ -1,11 +1,10 @@
 import gym
 import numpy as np
 
-from .cache import Cache
+from .cache import Cache, NoneContentType
 from .callback import CallbackManager
 from .feature.manager import FeatureManager
 from .request import RequestLoader, RequestSlice
-from .utils import NoneContentType
 
 
 class CacheEnv(gym.Env):

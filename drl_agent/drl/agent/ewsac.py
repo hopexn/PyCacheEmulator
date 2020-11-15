@@ -5,7 +5,8 @@ from ..memory import *
 from ..model import RLModel, Temperature
 from ..nn import EWMLP, GaussianEWMLP
 from ..policy import *
-from ..utils import torch_utils as ptu
+from cache_emu.utils import torch_utils as ptu
+
 
 
 class EWSacPiModel(RLModel):

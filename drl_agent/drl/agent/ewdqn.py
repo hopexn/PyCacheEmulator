@@ -4,7 +4,8 @@ from ..core import Agent
 from ..memory import *
 from ..model import RLModel
 from ..policy import *
-from ..utils import torch_utils as ptu
+from cache_emu.utils import torch_utils as ptu
+
 
 
 class EWQModel(RLModel):

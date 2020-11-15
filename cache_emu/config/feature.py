@@ -21,4 +21,3 @@ DEFAULT_OGD_LFU_FEATURE_CONFIG = {
 DEFAULT_OGD_OPT_FEATURE_CONFIG = {
     'use_ogd_opt_feature': True
 }
-

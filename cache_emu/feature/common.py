@@ -2,7 +2,7 @@ from collections import Iterable
 
 import numpy as np
 
-from ..utils import NoneContentType
+from ..cache import NoneContentType
 
 
 class FeatureDict:

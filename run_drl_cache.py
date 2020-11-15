@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from cache_emu.utils import load_yaml
+from cache_emu.utils.proj_utils import load_yaml
 from drl_agent import *
 
 parser = argparse.ArgumentParser()

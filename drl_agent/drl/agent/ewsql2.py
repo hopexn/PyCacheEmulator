@@ -2,12 +2,12 @@ import copy
 
 import torch
 
+from cache_emu.utils import torch_utils as ptu
 from ..core import Agent
 from ..memory import Memory
 from ..model import RLModel, Temperature
 from ..nn import EWMLP
 from ..policy import *
-from ..utils import torch_utils as ptu
 
 
 class EWSqlPiModel(RLModel):

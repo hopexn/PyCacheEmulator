@@ -4,6 +4,7 @@ import os
 import pandas as pd
 
 from cache_emu import *
+from cache_emu.utils import proj_utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config_path", type=str, help="the path of experiment config file.", required=True)
@@ -11,7 +12,7 @@ args = parser.parse_args()
 
 # 根目录路径
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-config = load_yaml(os.path.join(project_root, args.config_path))
+config = proj_utils.load_yaml(os.path.join(project_root, args.config_path))
 
 # 在这里选择运行的baseline
 runner_ranks = range(3)
