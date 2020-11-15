@@ -3,5 +3,5 @@ IQIYI_DATA_CONFIG = {
     "time_beg" : 1430668839,
     "time_end" : 1431878382,
     "time_int" : 10,
-    "data_path": "asserts/request.csv"
+    "data_path": ["asserts/request.csv"]
 }

@@ -19,7 +19,10 @@ class CacheRunner(Thread):
         self.data_config = kwargs.pop("data_config", IQIYI_DATA_CONFIG)
         self.feature_config = kwargs.pop("feature_config", None)
         
-        self.main_tag = "{}_{}".format(self.data_config.get("name", ""), self.capacity)
+        self.main_tag = "{}[{}]_{}".format(
+            self.data_config.get("name", ""),
+            kwargs.get("rank", 0),
+            self.capacity)
         self.sub_tag = self.__class__.__name__
         if self.sub_tag[-11:] == "CacheRunner":
             self.sub_tag = self.sub_tag[:-11]
