@@ -17,14 +17,6 @@ class EWVModel(RLModel):
         
         self.optim = torch.optim.Adam(self.net.parameters(), self.lr)
         self.loss_fn = torch.nn.MSELoss()
-    
-    def save_weights(self, path, prefix="", suffix=""):
-        prefix += self.__class__.__name__ + "_"
-        super().save_weights(path, prefix, suffix)
-    
-    def load_weights(self, path, prefix="", suffix=""):
-        prefix += self.__class__.__name__ + "_"
-        return super().load_weights(path, prefix, suffix)
 
 
 class EWDNN(Agent):

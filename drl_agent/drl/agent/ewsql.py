@@ -52,14 +52,6 @@ class EWSqlPiModel(RLModel):
         self.optim.step()
         
         return loss.cpu().item()
-    
-    def save_weights(self, path, prefix="", suffix=""):
-        prefix += self.__class__.__name__ + "_"
-        super().save_weights(path, prefix, suffix)
-    
-    def load_weights(self, path, prefix="", suffix=""):
-        prefix += self.__class__.__name__ + "_"
-        return super().load_weights(path, prefix, suffix)
 
 
 class EWSQL(EWDQN):
@@ -71,7 +63,7 @@ class EWSQL(EWDQN):
         super(EWSQL, self).__init__(content_dim, feature_dim, memory_size, batch_size, hidden_layer_units, lr, gamma,
                                     target_update, **kwargs)
         # 策略函数
-        print("Pi use kl div loss: ", use_kl_div_loss)
+        print("Policy use kl div loss: ", use_kl_div_loss)
         self.pi_model = EWSqlPiModel(content_dim, feature_dim, hidden_layer_units, lr, use_kl_div_loss=use_kl_div_loss)
         self.target_pi_model = copy.deepcopy(self.pi_model)
         

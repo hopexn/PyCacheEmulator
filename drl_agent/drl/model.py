@@ -53,6 +53,7 @@ class RLModel(torch.nn.Module):
     
     # 保存参数
     def save_weights(self, path, prefix="", suffix=""):
+        prefix += self.__class__.__name__ + "_"
         num_trainable_params = ptu.get_num_trainable_params([self.net])
         suffix = "-" + str(num_trainable_params) + suffix
         ptu.save_model(self.net, os.path.join(path, prefix + "net" + suffix + ".pt"))
@@ -60,6 +61,7 @@ class RLModel(torch.nn.Module):
     
     # 加载参数
     def load_weights(self, path, prefix="", suffix=""):
+        prefix += self.__class__.__name__ + "_"
         num_trainable_params = ptu.get_num_trainable_params([self.net])
         suffix = "-" + str(num_trainable_params) + suffix
         res1 = ptu.load_model(self.net, os.path.join(path, prefix + "net" + suffix + ".pt"))

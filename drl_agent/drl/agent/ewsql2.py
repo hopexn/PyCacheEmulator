@@ -47,9 +47,6 @@ class EWSqlPiModel(RLModel):
             # 根据kl散度定义实现
             log_probs = torch.log(probs + 1e-6)
             loss = (probs * (log_probs - log_target_probs.detach())).mean()
-            # 使用pytorch的kl_div
-            # target_probs = torch.exp(log_target_probs)
-            # loss = torch.nn.functional.kl_div(probs, target_probs, reduction="batchmean")
         else:
             loss = - (probs * log_target_probs.detach()).mean()
         
@@ -58,14 +55,6 @@ class EWSqlPiModel(RLModel):
         self.optim.step()
         
         return loss.cpu().item()
-    
-    def save_weights(self, path, prefix="", suffix=""):
-        prefix += self.__class__.__name__ + "_"
-        super().save_weights(path, prefix, suffix)
-    
-    def load_weights(self, path, prefix="", suffix=""):
-        prefix += self.__class__.__name__ + "_"
-        return super().load_weights(path, prefix, suffix)
 
 
 class EWSqlQModel(RLModel):
@@ -75,14 +64,6 @@ class EWSqlQModel(RLModel):
         self.net = ptu.build_mlp(feature_dim, hidden_layer_units, 2)
         self.optim = torch.optim.Adam(self.net.parameters(), self.lr)
         self.loss_fn = torch.nn.MSELoss()
-    
-    def save_weights(self, path, prefix="", suffix=""):
-        prefix += self.__class__.__name__ + "_"
-        super().save_weights(path, prefix, suffix)
-    
-    def load_weights(self, path, prefix="", suffix=""):
-        prefix += self.__class__.__name__ + "_"
-        return super().load_weights(path, prefix, suffix)
 
 
 class EWSQL2(Agent):
