@@ -1,7 +1,7 @@
 import numpy as np
 
 from .core import QPolicy
-from .utils import numpy_utils as npu
+from cache_emu import numpy_utils as npu
 
 
 class RandomQPolicy(QPolicy):

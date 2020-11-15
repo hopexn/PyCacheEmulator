@@ -15,18 +15,17 @@ class RlCacheRunner(CacheRunner):
             self.feature_config = DEFAULT_DRL_FEATURE_CONFIG
         
         self.agent_config = kwargs.pop("agent_config", DEFAULT_DRL_AGENT_CONFIG)
-        agent_class_name = self.agent_config.get("class_name", "EWDQN")
+        self.agent_class_name = self.agent_config.get("class_name", "EWDQN")
         
-        self.sub_tag = agent_class_name
+        self.sub_tag = self.agent_class_name
         self.env = ListWiseCacheEnv(
             capacity=capacity,
             data_config=self.data_config, feature_config=self.feature_config,
             main_tag=self.main_tag, sub_tag=self.sub_tag,
             **kwargs)
         
-        self.agent = eval_agent_class(agent_class_name)(
-            content_dim=capacity, feature_dim=self.env.feature_manger.dim,
-            **self.agent_config, **kwargs)
+        # 在线程启动后的on_run_begin()处初始化, 这样线程id才能与torch_device绑定。
+        self.agent = None
         
         self.observation = None
         self.action = None
@@ -44,3 +43,9 @@ class RlCacheRunner(CacheRunner):
             self.action = ptu.tensor(self.action, dtype=torch.long)
             self.next_observation = ptu.float_tensor(next_observation)
             return self.agent.backward(self.observation, self.action, self.reward, self.next_observation)
+    
+    def on_run_begin(self):
+        # 初始化rl agent
+        self.agent = eval_agent_class(self.agent_class_name)(
+            content_dim=self.capacity, feature_dim=self.env.feature_manger.dim,
+            **self.agent_config, **self.kwargs)

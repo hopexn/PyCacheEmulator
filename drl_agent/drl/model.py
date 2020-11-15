@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 
-from .utils import torch_utils as ptu
+from cache_emu import torch_utils as ptu
 
 
 class RLModel(torch.nn.Module):
@@ -70,7 +70,7 @@ class RLModel(torch.nn.Module):
 
 
 class Temperature(nn.Module):
-    def __init__(self, log_tau, min_entropy, lr=3e-4, log_tau_clip=(-4, 1)):
+    def __init__(self, log_tau, min_entropy, lr=3e-4, log_tau_clip=(-4, 1), **kwargs):
         super(Temperature, self).__init__()
         
         self.min_entropy = min_entropy

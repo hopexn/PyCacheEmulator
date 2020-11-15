@@ -1,4 +1,4 @@
-from threading import Thread
+import threading
 
 import numpy as np
 
@@ -7,11 +7,12 @@ from .config.feature import *
 from .envs import CacheEnv
 
 
-class CacheRunner(Thread):
+class CacheRunner(threading.Thread):
     def __init__(self, capacity, **kwargs):
         super().__init__()
         
         self.capacity = capacity
+        self.kwargs = kwargs.copy()
         
         self.env = None
         
@@ -35,6 +36,9 @@ class CacheRunner(Thread):
     def run(self):
         assert self.env is not None
         self.info = {}
+        
+        self.on_run_begin()
+        
         terminal = False
         observation = self.env.reset()
         while not terminal:
@@ -42,7 +46,16 @@ class CacheRunner(Thread):
             next_observation, reward, terminal, self.info = self.env.step(action)
             self.backward(reward, terminal, next_observation)
             observation = next_observation
+        
+        self.on_run_end()
+        
         return self.info
+    
+    def on_run_begin(self):
+        pass
+    
+    def on_run_end(self):
+        pass
     
     def close(self):
         assert self.env is not None

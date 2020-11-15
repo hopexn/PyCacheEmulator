@@ -3,7 +3,7 @@ import os
 import torch
 from torch import nn
 
-from .drl import ptu
+from cache_emu import torch_utils as  ptu
 
 
 class KDModel(nn.Module):
