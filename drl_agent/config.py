@@ -10,7 +10,8 @@ DEFAULT_DRL_AGENT_CONFIG = {
 DEFAULT_DISTILLING_CONFIG = {
     'class_name': "HardKDCallback",
     'batch_size': 128,
-    'tau'       : 0,
+    'tau'       : 0.2,
     'lr'        : 0.01,
-    'interval'  : 10
+    'interval'  : 10,
+    'min_entropy_ratio': 0.1
 }

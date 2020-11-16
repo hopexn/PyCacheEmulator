@@ -8,12 +8,12 @@ from cache_emu import torch_utils as ptu
 from cache_emu.utils import log_utils
 from cache_emu.utils import mp_utils as mpu
 from ..drl import RLModel
-from ..kd_model import KDModel
+from ..kd_model import KDWeights
 
 
 class HardKDCallback(Callback):
     def __init__(self, model, memory,
-                 batch_size=128, interval=1, lr=0.01, tau=1.0, weights_path=None,
+                 batch_size=128, interval=1, lr=0.01, weights_path=None,
                  k=2, alpha=0.01, **kwargs):
         super().__init__(interval=interval)
         
@@ -23,8 +23,7 @@ class HardKDCallback(Callback):
         self.batch_size = batch_size
         self.lr = lr
         self.weights_path = weights_path
-        self.tau = tau
-        self.ws = KDModel(mpu.comm_size, lr, alpha=alpha)
+        self.ws = KDWeights(mpu.comm_size, lr, alpha=alpha)
         
         self.main_tag = kwargs.get("main_tag", "")
         self.sub_tag = kwargs.get("sub_tag", "")
@@ -48,7 +47,7 @@ class HardKDCallback(Callback):
             batch_outputs = torch.tensor([])
         else:
             batch_outputs = self.model.forward_distilling(batch_inputs)
-            
+        
         batch_inputs_list = mpu.all_to_all(ptu.get_numpy(batch_inputs))
         batch_outputs_list = mpu.all_to_all(ptu.get_numpy(batch_outputs))
         
@@ -85,9 +84,10 @@ class SoftKDCallback(HardKDCallback):
     def __init__(self, model, memory,
                  batch_size=128, intervals=1, lr=0.01, tau=1.0,
                  weights_path=None, use_kl_div_loss=True, **kwargs):
-        super().__init__(model, memory, batch_size, intervals, lr, tau, weights_path, **kwargs)
+        super().__init__(model, memory, batch_size, intervals, lr, weights_path, **kwargs)
         self.loss_fn = self.my_loss_func
         self.use_kl_div_loss = use_kl_div_loss
+        self.tau = tau
     
     def my_loss_func(self, probs, log_target_probs):
         if self.use_kl_div_loss:

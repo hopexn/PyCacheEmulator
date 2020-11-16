@@ -13,3 +13,4 @@ agent_config:
   use_kl_div_loss: True
   update_tau_freq: 5
   enable_double_q: False
+log_id: "0001"
