@@ -50,8 +50,8 @@ class GaussianEWMLP(nn.Module):
         self.log_std_max = log_std_max
         
         self.net = ptu.build_mlp(feature_dim, hidden_layer_units)
-        self.l_mu = nn.Linear(hidden_layer_units[-1], 1).to(ptu.get_device())
-        self.l_log_std = nn.Linear(hidden_layer_units[-1], 1).to(ptu.get_device())
+        self.l_mu = nn.Linear(hidden_layer_units[-1], 1).to(ptu.device)
+        self.l_log_std = nn.Linear(hidden_layer_units[-1], 1).to(ptu.device)
     
     def forward(self, x):
         y = self.net(x)

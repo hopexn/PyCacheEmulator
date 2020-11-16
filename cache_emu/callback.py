@@ -87,7 +87,7 @@ class LogCallback(Callback):
         self.total_hit_cnt = 0
         self.total_req_cnt = 0
         
-        log_utils.setup_logger(**kwargs)
+        log_utils.init(**kwargs)
     
     def on_step_end(self, slice_hit_cnt=0, slice_req_cnt=0, **kwargs):
         self.episode_hit_cnt += slice_hit_cnt

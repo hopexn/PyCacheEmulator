@@ -1,5 +1,5 @@
 capacity: 10
-verbose: true
+verbose: false
 agent_config:
   class_name: "EWDNN"
   hidden_layer_units:

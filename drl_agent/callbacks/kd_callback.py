@@ -4,9 +4,9 @@ import torch
 import torch.nn.functional as F
 
 from cache_emu import Callback
-from cache_emu import thread_utils as tru
-from cache_emu import torch_utils as  ptu
+from cache_emu import torch_utils as ptu
 from cache_emu.utils import log_utils
+from cache_emu.utils import mp_utils as mpu
 from ..drl import RLModel
 from ..kd_model import KDModel
 
@@ -24,7 +24,7 @@ class HardKDCallback(Callback):
         self.lr = lr
         self.weights_path = weights_path
         self.tau = tau
-        self.ws = KDModel(tru.comm_size, lr, alpha=alpha)
+        self.ws = KDModel(mpu.comm_size, lr, alpha=alpha)
         
         self.main_tag = kwargs.get("main_tag", "")
         self.sub_tag = kwargs.get("sub_tag", "")
@@ -34,22 +34,23 @@ class HardKDCallback(Callback):
     
     def on_game_begin(self, **kwargs):
         if self.weights_path is not None:
-            res = self.ws.load_weights(self.weights_path, suffix="_{}".format(tru.comm_size))
+            res = self.ws.load_weights(self.weights_path, suffix="_{}".format(mpu.comm_size))
             return {"load_kd_weights": res}
     
     def on_game_end(self, **kwargs):
         if self.weights_path is not None:
-            self.ws.save_weights(self.weights_path, suffix="_{}".format(tru.comm_size))
+            self.ws.save_weights(self.weights_path, suffix="_{}".format(mpu.comm_size))
     
     def on_episode_end(self, **kwargs):
         batch_inputs = self.memory.sample_observations(self.batch_size)
-        if len(batch_inputs) > 0:
-            batch_outputs = self.model.forward_distilling(batch_inputs)
-        else:
+        if batch_inputs is None or len(batch_inputs) == 0:
+            batch_inputs = torch.tensor([])
             batch_outputs = torch.tensor([])
-        
-        batch_inputs_list = tru.all_to_all(ptu.get_numpy(batch_inputs))
-        batch_outputs_list = tru.all_to_all(ptu.get_numpy(batch_outputs))
+        else:
+            batch_outputs = self.model.forward_distilling(batch_inputs)
+            
+        batch_inputs_list = mpu.all_to_all(ptu.get_numpy(batch_inputs))
+        batch_outputs_list = mpu.all_to_all(ptu.get_numpy(batch_outputs))
         
         losses = []
         for i, (batch_inputs, batch_outputs) in enumerate(zip(batch_inputs_list, batch_outputs_list)):
@@ -108,8 +109,8 @@ class SoftKDCallback(HardKDCallback):
         log_probs_softened = log_probs / self.tau
         batch_outputs = log_probs_softened
         
-        batch_inputs_list = tru.all_to_all(ptu.get_numpy(batch_inputs))
-        batch_outputs_list = tru.all_to_all(ptu.get_numpy(batch_outputs))
+        batch_inputs_list = mpu.all_to_all(ptu.get_numpy(batch_inputs))
+        batch_outputs_list = mpu.all_to_all(ptu.get_numpy(batch_outputs))
         
         losses = []
         for i, (batch_inputs, batch_outputs) in enumerate(zip(batch_inputs_list, batch_outputs_list)):
@@ -143,8 +144,8 @@ class RandomKDCallback(HardKDCallback):
         batch_inputs = ptu.from_numpy(self.observation_space.sample())
         batch_outputs = self.model.forward_distilling(batch_inputs)
         
-        batch_inputs_list = tru.all_to_all(ptu.get_numpy(batch_inputs))
-        batch_outputs_list = tru.all_to_all(ptu.get_numpy(batch_outputs))
+        batch_inputs_list = mpu.all_to_all(ptu.get_numpy(batch_inputs))
+        batch_outputs_list = mpu.all_to_all(ptu.get_numpy(batch_outputs))
         
         losses = []
         for i, (batch_inputs, batch_outputs) in enumerate(zip(batch_inputs_list, batch_outputs_list)):

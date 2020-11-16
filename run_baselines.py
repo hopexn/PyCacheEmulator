@@ -1,4 +1,5 @@
 import argparse
+import multiprocessing as mp
 import os
 
 import pandas as pd
@@ -17,25 +18,26 @@ config = proj_utils.load_yaml(os.path.join(project_root, args.config_path))
 comm_size = config.get("com_size", 7)
 runner_ranks = range(comm_size)
 runner_funcs = [
-    RandomCacheRunner,
-    LruCacheRunner,
-    LfuCacheRunner,
-    OgdOptCacheRunner,
-    # OgdLruCacheRunner,
-    # OgdLfuCacheRunner,
-    # RlCacheRunner # 强化学习方法，也和run_rl_cache.py运行
+    [RandomCacheRunner, {}],
+    [LruCacheRunner, {}],
+    [LfuCacheRunner, {}],
+    # [OgdOptCacheRunner, {}],
+    # [OgdLruCacheRunner, {}],
+    [OgdLfuCacheRunner, {}],
+    # [RlCacheRunner, {}] # 强化学习方法，也和run_rl_cache.py运行
 ]
-
-runners = {}
-for r_func in runner_funcs:
+msg_queue = mp.Queue()
+runners = []
+for r_func, r_func_kwargs in runner_funcs:
     for rank in runner_ranks:
-        runner = r_func(**config, rank=rank)
-        runner_name = "{}/{}".format(runner.main_tag, runner.sub_tag)
-        runners[runner_name] = runner
+        runner = r_func(rank=rank, msg_queue=msg_queue, **config, **r_func_kwargs)
+        runners.append(runner)
 
-[runner.start() for runner in runners.values()]
-[runner.join() for runner in runners.values()]
-[runner.close() for runner in runners.values()]
+[runner.start() for runner in runners]
+[runner.join() for runner in runners]
 
-results = {runner_name: runner.get_result() for runner_name, runner in runners.items()}
+results = {}
+while not msg_queue.empty():
+    results.update(msg_queue.get())
+
 print(pd.DataFrame(results).T)

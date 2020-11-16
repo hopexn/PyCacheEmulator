@@ -8,3 +8,5 @@ torch~=1.4.0
 numba>=0.48.0
 tensorboard>=1.14
 
+
+mpi4py>=3.0.3

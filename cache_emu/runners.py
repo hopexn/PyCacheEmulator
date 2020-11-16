@@ -1,4 +1,4 @@
-import threading
+import multiprocessing as mp
 
 import numpy as np
 
@@ -7,65 +7,61 @@ from .config.feature import *
 from .envs import CacheEnv
 
 
-class CacheRunner(threading.Thread):
+class CacheRunner(mp.Process):
     def __init__(self, capacity, **kwargs):
         super().__init__()
         
         self.capacity = capacity
         self.kwargs = kwargs.copy()
+        self.msg_queue: mp.Queue = kwargs.get("msg_queue", None)
         
         self.env = None
         
         # 解析参数
-        self.data_config = kwargs.pop("data_config", IQIYI_DATA_CONFIG)
-        self.feature_config = kwargs.pop("feature_config", None)
+        self.data_config = kwargs.get("data_config", IQIYI_DATA_CONFIG)
+        self.feature_config = kwargs.get("feature_config", None)
         
         self.main_tag = "{}/{}/{}".format(
             self.data_config.get("name", ""),
             kwargs.get("rank", 0),
             self.capacity,
         )
-        self.sub_tag = self.__class__.__name__
-        if self.sub_tag[-11:] == "CacheRunner":
-            self.sub_tag = self.sub_tag[:-11]
-        
-        # 用于保存线程运行结果
-        self.info = {}
-        self.result = {}
+        self.sub_tag = self.__class__.__name__[:-11]
     
-    def run(self):
+    def run(self, **kwargs):
         assert self.env is not None
-        self.info = {}
         
-        self.on_run_begin()
+        result = {}
+        res = self.on_run_begin(**self.kwargs, **kwargs)
+        if res is not None:
+            result.update(res)
         
         terminal = False
         observation = self.env.reset()
         while not terminal:
             action = self.forward(observation)
-            next_observation, reward, terminal, self.info = self.env.step(action)
+            next_observation, reward, terminal, info = self.env.step(action)
             self.backward(reward, terminal, next_observation)
             observation = next_observation
         
-        self.on_run_end()
+        res = self.env.close()
+        if res is not None:
+            result.update(res)
         
-        return self.info
+        res = self.on_run_end(**self.kwargs, **kwargs)
+        if res is not None:
+            result.update(res)
+        
+        if self.msg_queue is not None:
+            self.msg_queue.put({"{}/{}".format(self.main_tag, self.sub_tag): result})
+        
+        return result
     
-    def on_run_begin(self):
+    def on_run_begin(self, **kwargs):
         pass
     
-    def on_run_end(self):
+    def on_run_end(self, **kwargs):
         pass
-    
-    def close(self):
-        assert self.env is not None
-        self.result = self.env.close()
-    
-    def get_info(self):
-        return self.info
-    
-    def get_result(self):
-        return self.result
     
     def forward(self, observation):
         raise NotImplementedError()

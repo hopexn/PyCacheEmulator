@@ -12,7 +12,7 @@ class CacheEnv(gym.Env):
                  data_config={}, feature_config={}, callback_config={}, **kwargs):
         self.capacity = capacity
         self.cache = Cache(capacity=capacity)
-        self.loader = RequestLoader(**data_config)
+        self.loader = RequestLoader(**data_config, **kwargs)
         self.feature_manger = FeatureManager(max_contents=self.loader.get_max_contents(), **feature_config, **kwargs)
         self.callback_manager = CallbackManager(total_steps=self.loader.n_slices, **callback_config, **kwargs)
         
