@@ -15,7 +15,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 config = proj_utils.load_yaml(os.path.join(project_root, args.config_path))
 
 # 在这里选择运行的baseline
-comm_size = config.get("com_size", 7)
+comm_size = config.get("comm_size", 7)
 runner_ranks = range(comm_size)
 runner_funcs = [
     [RandomCacheRunner, {}],

@@ -12,14 +12,14 @@ class CacheRunner(mp.Process):
         super().__init__()
         
         self.capacity = capacity
-        self.kwargs = kwargs.copy()
+        self.kwargs = kwargs
         self.msg_queue: mp.Queue = kwargs.get("msg_queue", None)
         
         self.env = None
         
         # 解析参数
-        self.data_config = kwargs.get("data_config", IQIYI_DATA_CONFIG)
-        self.feature_config = kwargs.get("feature_config", None)
+        self.data_config = kwargs.pop("data_config", IQIYI_DATA_CONFIG)
+        self.feature_config = kwargs.pop("feature_config", None)
         
         self.main_tag = "{}/{}/{}".format(
             self.data_config.get("name", ""),
@@ -77,7 +77,7 @@ class RandomCacheRunner(CacheRunner):
         self.env = CacheEnv(capacity=capacity,
                             data_config=self.data_config, feature_config=self.feature_config,
                             main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+                            **self.kwargs)
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -90,7 +90,7 @@ class LruCacheRunner(CacheRunner):
         self.env = CacheEnv(capacity=capacity,
                             data_config=self.data_config, feature_config=self.feature_config,
                             main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+                            **self.kwargs)
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -103,7 +103,7 @@ class LfuCacheRunner(CacheRunner):
         self.env = CacheEnv(capacity=capacity,
                             data_config=self.data_config, feature_config=self.feature_config,
                             main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+                            **self.kwargs)
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -116,7 +116,7 @@ class OgdOptCacheRunner(CacheRunner):
         self.env = CacheEnv(capacity=capacity,
                             data_config=self.data_config, feature_config=self.feature_config,
                             main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+                            **self.kwargs)
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -129,7 +129,7 @@ class OgdLruCacheRunner(CacheRunner):
         self.env = CacheEnv(capacity=capacity,
                             data_config=self.data_config, feature_config=self.feature_config,
                             main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+                            **self.kwargs)
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -142,7 +142,7 @@ class OgdLfuCacheRunner(CacheRunner):
         self.env = CacheEnv(capacity=capacity,
                             data_config=self.data_config, feature_config=self.feature_config,
                             main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+                            **self.kwargs)
     
     def forward(self, observation):
         return np.argmin(observation.flatten())

@@ -1,0 +1,8 @@
+capacity: 10
+verbose: true
+agent_config:
+  class_name: "EWDNN"
+  hidden_layer_units:
+    - 32
+    - 8
+log_id: "0000"

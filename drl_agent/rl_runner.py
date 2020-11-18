@@ -33,7 +33,7 @@ class RlCacheRunner(CacheRunner):
             capacity=capacity,
             data_config=self.data_config, feature_config=self.feature_config,
             main_tag=self.main_tag, sub_tag=self.sub_tag,
-            **kwargs)
+            **self.kwargs)
         
         # 初始化变量
         self.observation = None

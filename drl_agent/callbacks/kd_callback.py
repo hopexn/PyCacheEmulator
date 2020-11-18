@@ -23,7 +23,7 @@ class HardKDCallback(Callback):
         self.batch_size = batch_size
         self.lr = lr
         self.weights_path = weights_path
-        self.ws = KDWeights(mpu.comm_size, lr, alpha=alpha)
+        self.ws = KDWeights(mpu.comm_size, lr, alpha=alpha, **kwargs)
         
         self.main_tag = kwargs.get("main_tag", "")
         self.sub_tag = kwargs.get("sub_tag", "")

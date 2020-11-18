@@ -48,6 +48,7 @@ class RequestLoader:
         pass
     
     def _slice_by_time(self, timestamps, content_ids, t_beg, t_end, t_int):
+        t_beg, t_end, t_int = int(t_beg), int(t_end), int(t_int)
         assert t_end >= t_beg and t_int > 0 and len(timestamps) == len(content_ids)
         slices = []
         num_slices = int(ceil(float(t_end - t_beg) / t_int))

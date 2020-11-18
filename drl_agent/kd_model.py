@@ -14,7 +14,7 @@ class KDWeights(nn.Module):
         self.num_agents = num_agents
         self.lr = lr
         
-        min_entropy_ratio = kwargs.get('min_entropy_ratio', 0.8)
+        min_entropy_ratio = kwargs.get('min_entropy_ratio', 0.2)
         self.tau = Temperature(log_tau=log_tau, min_entropy=np.log(num_agents) * min_entropy_ratio, **kwargs)
         self.ws = nn.Parameter(ptu.ones(num_agents, dtype=torch.float), requires_grad=True)
         self.optim = torch.optim.Adam([self.ws], lr=lr)

@@ -38,7 +38,7 @@ def close():
 def write_scalar(tag, scalar_value, global_step):
     assert _logger is not None
     with _mutex:
-        _logger.add_scalar(tag, scalar_value, global_step=global_step, walltime=global_step)
+        _logger.add_scalar(tag, scalar_value, global_step=global_step)
         if verbose:
             print("{},{}: {}".format(int(global_step), tag, scalar_value))
 
@@ -47,7 +47,7 @@ def write_scalar(tag, scalar_value, global_step):
 def write_scalars(main_tag, tag_scalar_dict, global_step):
     assert _logger is not None
     with _mutex:
-        _logger.add_scalars(main_tag, tag_scalar_dict, global_step=global_step, walltime=global_step)
+        _logger.add_scalars(main_tag, tag_scalar_dict, global_step=global_step)
         if verbose:
             print("{},{}: {}".format(int(global_step), main_tag, tag_scalar_dict))
 
