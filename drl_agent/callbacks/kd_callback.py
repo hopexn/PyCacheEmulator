@@ -30,6 +30,7 @@ class HardKDCallback(Callback):
         
         self.loss_fn = F.mse_loss
         self.k = k
+        self.verbose = kwargs.get("verbose", False)
     
     def on_game_begin(self, **kwargs):
         if self.weights_path is not None:
@@ -77,7 +78,8 @@ class HardKDCallback(Callback):
     def write_ws(self, **kwargs):
         if self.i_episode % 100 == 0:
             global_step = self.i_episode / 100
-            log_utils.write_scalars("{}/{}".format(self.main_tag, self.sub_tag), self.ws.get_dict(), global_step)
+            log_utils.write_scalars("{}/{}".format(self.main_tag, self.sub_tag),
+                                    self.ws.get_dict(), global_step, self.verbose)
     
     def get_models(self, **kwargs):
         return [self.ws]

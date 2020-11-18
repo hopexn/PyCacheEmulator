@@ -81,6 +81,7 @@ class LogCallback(Callback):
         super(LogCallback, self).__init__(interval, **kwargs)
         self.main_tag = main_tag
         self.sub_tag = sub_tag
+        self.verbose = kwargs.get("verbose", False)
         
         self.episode_hit_cnt = 0
         self.episode_req_cnt = 0
@@ -100,8 +101,12 @@ class LogCallback(Callback):
     def on_episode_end(self, **kwargs):
         episode_hit_rate = self.episode_hit_cnt / (self.episode_req_cnt + 1e-6)
         mean_hit_rate = self.total_hit_cnt / (self.total_req_cnt + 1e-6)
-        log_utils.write_scalars("EHR/{}".format(self.main_tag), {self.sub_tag: episode_hit_rate}, self.i_episode)
-        log_utils.write_scalars("MHR/{}".format(self.main_tag), {self.sub_tag: mean_hit_rate}, self.i_episode)
+        log_utils.write_scalars("EHR/{}".format(self.main_tag),
+                                {self.sub_tag: episode_hit_rate},
+                                self.i_episode, self.verbose)
+        log_utils.write_scalars("MHR/{}".format(self.main_tag),
+                                {self.sub_tag: mean_hit_rate},
+                                self.i_episode, self.verbose)
         self.episode_hit_cnt = 0
         self.episode_req_cnt = 0
     

@@ -7,9 +7,6 @@ from torch.utils.tensorboard import SummaryWriter
 # 设置numpy输出格式
 np.set_printoptions(precision=3, suppress=True)
 
-# 啰嗦模式
-verbose = False
-
 # 记录日志
 _logger: SummaryWriter = None
 _mutex = mp.Lock()
@@ -18,9 +15,7 @@ _mutex = mp.Lock()
 # 设置logger
 def init(**kwargs):
     global _logger
-    global verbose
     
-    verbose = kwargs.get("verbose", False)
     log_dir = os.path.join(os.path.expanduser('~/default_log'), kwargs.get("log_id", "0000"))
     os.system("mkdir -p {}".format(log_dir))
     _logger = SummaryWriter(log_dir=log_dir, flush_secs=10)
@@ -35,7 +30,7 @@ def close():
 
 
 # 将标量数据写到日志
-def write_scalar(tag, scalar_value, global_step):
+def write_scalar(tag, scalar_value, global_step, verbose=False):
     assert _logger is not None
     with _mutex:
         _logger.add_scalar(tag, scalar_value, global_step=global_step)
@@ -44,7 +39,7 @@ def write_scalar(tag, scalar_value, global_step):
 
 
 # 将多个标量数据写到日志
-def write_scalars(main_tag, tag_scalar_dict, global_step):
+def write_scalars(main_tag, tag_scalar_dict, global_step, verbose=False):
     assert _logger is not None
     with _mutex:
         _logger.add_scalars(main_tag, tag_scalar_dict, global_step=global_step)

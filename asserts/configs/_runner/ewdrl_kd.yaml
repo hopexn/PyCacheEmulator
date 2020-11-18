@@ -1,3 +1,3 @@
-#- [ OgdOptCacheRunner,{ } ]
-#- [ RlCacheRunner,{ enable_distilling: false } ]
-- [ RlCacheRunner,{ enable_distilling: true } ]
+- [ OgdOptCacheRunner,{ } ]
+- [ RlCacheRunner,{ enable_distilling: false } ]
+- [ RlCacheRunner,{ enable_distilling: true, verbose: true } ]
