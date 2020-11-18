@@ -1,3 +1,4 @@
+from .agent.ewa2c import EWA2C
 from .agent.ewddpg import EWDDPG
 from .agent.ewdnn import EWDNN
 from .agent.ewdqn import EWDQN

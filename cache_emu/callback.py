@@ -34,7 +34,7 @@ class CallbackManager:
         self.callbacks = []
         self.i_step = 0
         
-        self.register_callback(LogCallback(**log_config, **kwargs))
+        self.register_callback(LogCallback(**{**kwargs, **log_config}))
     
     def register_callback(self, callback: Callback):
         self.callbacks.append(callback)

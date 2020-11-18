@@ -32,7 +32,7 @@ class EWDQN(Agent):
         self.target_q_model = copy.deepcopy(self.q_model)
         
         # 创建ReplayBuffer
-        self.memory = Memory(memory_size)
+        self.memory = SequentialMemory(memory_size)
         
         # 动作策略参数
         self.policy = GreedyQPolicy(content_dim)

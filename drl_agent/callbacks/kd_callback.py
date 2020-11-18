@@ -7,14 +7,14 @@ from cache_emu import Callback
 from cache_emu import torch_utils as ptu
 from cache_emu.utils import log_utils
 from cache_emu.utils import mp_utils as mpu
-from ..drl import RLModel
+from ..ewdrl import RLModel
 from ..kd_model import KDWeights
 
 
 class HardKDCallback(Callback):
     def __init__(self, model, memory,
-                 batch_size=128, interval=1, lr=0.01, weights_path=None,
-                 k=2, alpha=0.01, **kwargs):
+                 batch_size=128, interval=10, lr=0.01, weights_path=None,
+                 k=0, alpha=0.01, **kwargs):
         super().__init__(interval=interval)
         
         self.model: RLModel = model
@@ -60,13 +60,16 @@ class HardKDCallback(Callback):
             losses.append(loss)
         
         # 更新权重, 更新模型
-        loss = self.ws.forward(losses)
+        if self.k <= 0:
+            loss = self.ws.forward(losses)
+        else:
+            loss = self.ws.forward_topk(losses, self.k)
+        
         self.ws.zero_grad()
         self.model.zero_grad()
         loss.backward()
         self.model.step()
         self.ws.step()
-        
         self.write_ws()
         
         return {"kd_loss": loss.cpu().item()}

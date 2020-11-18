@@ -6,20 +6,19 @@ from cache_emu.runners import CacheRunner
 from cache_emu.utils import mp_utils as mpu
 from . import config
 from .callbacks import eval_callback_class
-from .drl import eval_agent_class
+from .ewdrl import eval_agent_class
 
 
 class RlCacheRunner(CacheRunner):
-    def __init__(self, capacity, **kwargs):
-        super(RlCacheRunner, self).__init__(capacity, **kwargs)
-        
-        if self.feature_config is None:
-            self.feature_config = config.DEFAULT_DRL_FEATURE_CONFIG
+    def __init__(self, capacity, data_config, feature_config, **kwargs):
+        super(RlCacheRunner, self).__init__(capacity, data_config, **kwargs)
         
         self.agent_config = kwargs.pop("agent_config", config.DEFAULT_DRL_AGENT_CONFIG)
         self.agent_class_name = self.agent_config.get("class_name", "EWDQN")
         self.agent = None
-        self.device = None
+        
+        if feature_config is None or len(feature_config) == 0:
+            feature_config = config.DEFAULT_DRL_FEATURE_CONFIG
         
         # 是否启用蒸馏
         self.enable_distilling = kwargs.get("enable_distilling", False)
@@ -31,34 +30,34 @@ class RlCacheRunner(CacheRunner):
         # 初始化环境
         self.env = ListWiseCacheEnv(
             capacity=capacity,
-            data_config=self.data_config, feature_config=self.feature_config,
+            data_config=data_config, feature_config=feature_config,
             main_tag=self.main_tag, sub_tag=self.sub_tag,
-            **self.kwargs)
+            **kwargs)
         
         # 初始化变量
         self.observation = None
         self.action = None
         self.reward = None
         self.next_observation = None
+        self.kwargs = kwargs
     
-    def on_run_begin(self, **kwargs):
+    def on_run_begin(self):
         # 注册cuda运行设备
         ptu.register_device(**self.kwargs)
         # 初始化agent
         
         self.agent = eval_agent_class(self.agent_class_name)(
             content_dim=self.capacity, feature_dim=self.env.feature_manger.dim,
-            **self.agent_config, **self.kwargs)
+            **{**self.kwargs, **self.agent_config})
         
         if self.enable_distilling:
             mpu.register_process()
-            
             kd_config = self.kwargs.get("kd_config", config.DEFAULT_DISTILLING_CONFIG)
             kd_class = eval_callback_class(kd_config.get("class_name", "HardKDCallback"))
             kd_callback = kd_class(
                 model=self.agent.get_distilling_model(), memory=self.agent.memory,
                 main_tag=self.main_tag, sub_tag=self.sub_tag,
-                **kd_config, **self.kwargs
+                **{**self.kwargs, **kd_config}
             )
             self.env.callback_manager.register_callback(kd_callback)
     

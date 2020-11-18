@@ -1,0 +1,26 @@
+capacity: 10
+verbose: true
+log_id: "0000"
+comm_size: 7
+data_permute: false
+data_config: "iqiyi12.yaml"
+feature_config: "drl.yaml"
+runner_config: "baselines.yaml"
+
+agent_config:
+  class_name: "EWDNN"
+  hidden_layer_units:
+    - 32
+    - 8
+  log_tau: -1
+  log_tau_clip: [ -6, 1 ]
+  min_entropy_ratio: 0.01
+  memory_size: 50000
+  batch_size: 128
+  use_kl_div_loss: True
+  update_tau_freq: 5
+  enable_double_q: False
+callback_config:
+  kd_config:
+    interval: 20
+    k: 2
