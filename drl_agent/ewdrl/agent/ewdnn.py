@@ -17,6 +17,9 @@ class EWVModel(RLModel):
         
         self.optim = torch.optim.Adam(self.net.parameters(), self.lr)
         self.loss_fn = torch.nn.MSELoss()
+    
+    def forward_distilling(self, x):
+        return super().forward(x)
 
 
 class EWDNN(Agent):
@@ -30,7 +33,7 @@ class EWDNN(Agent):
         self.target_v_model = copy.deepcopy(self.v_model)
         
         # 创建ReplayBuffer
-        self.memory = Memory(memory_size)
+        self.memory = SequentialMemory(memory_size)
         
         # 动作策略参数
         self.policy = GreedyQPolicy(content_dim)
@@ -50,6 +53,11 @@ class EWDNN(Agent):
     
     def backward(self, observation, action, reward, next_observation):
         self.update_count += 1
+        
+        max_idx = action.min(dim=-1)[1]
+        if max_idx < self.content_dim:
+            self.memory.store_distilling_transition(
+                observation[max_idx], reward[max_idx], next_observation[max_idx])
         
         observation = observation[:self.content_dim].unsqueeze(0)
         action = action[:self.content_dim].unsqueeze(0)
@@ -91,6 +99,9 @@ class EWDNN(Agent):
     
     def get_distilling_model(self):
         return self.v_model
+    
+    def get_distilling_memory(self):
+        return self.memory
     
     def get_models(self):
         return [self]

@@ -2,13 +2,12 @@ import copy
 
 import torch
 
-from .ewdqn import EWDQN
+from cache_emu.utils import torch_utils as ptu
+from .ewdnn import EWDNN
 from ..memory import Memory
 from ..model import RLModel, Temperature
 from ..nn import EWMLP
 from ..policy import *
-from cache_emu.utils import torch_utils as ptu
-
 
 
 class EWSqlPiModel(RLModel):
@@ -55,7 +54,7 @@ class EWSqlPiModel(RLModel):
         return loss.cpu().item()
 
 
-class EWSQL(EWDQN):
+class EWSQL(EWDNN):
     def __init__(self, content_dim, feature_dim, memory_size=10000, batch_size=32,
                  hidden_layer_units=[32, 8], lr=3e-4,
                  gamma=0.99, target_update=2,
@@ -76,6 +75,7 @@ class EWSQL(EWDQN):
         
         # 动作策略参数
         self.policy = GreedyQPolicy(content_dim)
+        self.policy = ProbabilisticQPolicy(content_dim)
         # self.policy = DecayEpsGreedyQPolicy(content_dim, eps_min=0.01)
         
         # RL超参数
@@ -94,18 +94,12 @@ class EWSQL(EWDQN):
         if distilling_pi_model:
             self.distilling_model = self.pi_model
         else:
-            self.distilling_model = self.q_model
+            self.distilling_model = self.v_model
     
     def forward(self, observation):
         with torch.no_grad():
             probs = self.pi_model.forward(observation)
-        
-        num_candidates = observation.shape[0]
-        action = np.random.choice(np.arange(num_candidates), p=ptu.get_numpy(probs))
-        action_oh = np.ones(num_candidates, dtype=np.bool)
-        action_oh[action] = 0
-        
-        return action_oh
+        return self.policy.select_action(ptu.get_numpy(probs))
     
     def backward(self, observation, action, reward, next_observation):
         self.update_count += 1
@@ -128,17 +122,17 @@ class EWSQL(EWDQN):
         actions = actions.unsqueeze(-1)
         
         with torch.no_grad():
-            next_state_values = self.target_q_model.forward_target(next_observations)
+            next_state_values = self.target_v_model.forward_target(next_observations)
             target_q_values = rewards + self.gamma * next_state_values
             
             entropy = self.target_pi_model.entropy(observations).gather(dim=-1, index=actions).squeeze(-1)
             target_q_values = target_q_values + self.tau * entropy
         
         # update q model
-        v_loss = self.q_model.fit(observations[:, :self.content_dim], target_q_values[:, :self.content_dim])
+        v_loss = self.v_model.fit(observations[:, :self.content_dim], target_q_values[:, :self.content_dim])
         
         # update policy
-        state_values = self.target_q_model(observations)
+        state_values = self.target_v_model(observations)
         pi_loss = self.pi_model.backward(observations, actions, target_q_values, state_values, self.tau.value())
         
         info = {"v_loss": v_loss, "pi_loss": pi_loss}
@@ -154,10 +148,10 @@ class EWSQL(EWDQN):
     
     def _update_target(self):
         if self.target_update > 1 and self.update_count % self.target_update == 0:
-            ptu.copy_model_params_from_to(self.q_model, self.target_q_model)
+            ptu.copy_model_params_from_to(self.v_model, self.target_v_model)
             ptu.copy_model_params_from_to(self.pi_model, self.target_pi_model)
         else:
-            ptu.soft_update_from_to(self.q_model, self.target_q_model, self.target_update)
+            ptu.soft_update_from_to(self.v_model, self.target_v_model, self.target_update)
             ptu.soft_update_from_to(self.pi_model, self.target_pi_model, self.target_update)
     
     def save_weights(self, path, prefix="", suffix=""):

@@ -5,7 +5,7 @@ from cache_emu import torch_utils as ptu
 from cache_emu.runners import CacheRunner
 from cache_emu.utils import mp_utils as mpu
 from . import config
-from .callbacks import eval_callback_class
+from .kd_callback import eval_callback_class
 from .ewdrl import eval_agent_class
 
 

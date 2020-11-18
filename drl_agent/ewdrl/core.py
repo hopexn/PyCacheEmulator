@@ -20,6 +20,9 @@ class Agent:
     
     def get_distilling_model(self):
         raise NotImplementedError()
+    
+    def get_distilling_memory(self):
+        raise NotImplementedError()
 
 
 class QPolicy:
