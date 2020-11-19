@@ -1,6 +1,6 @@
 import copy
 
-from cache_emu.utils import torch_utils as ptu
+from py_cache_emu.utils import torch_utils as ptu
 from ..core import Agent
 from ..memory import *
 from ..model import RLModel

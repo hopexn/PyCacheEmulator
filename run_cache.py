@@ -4,7 +4,7 @@ import multiprocessing as mp
 import numpy as np
 import pandas as pd
 
-from cache_emu import *
+from py_cache_emu import *
 from drl_agent import RlCacheRunner
 
 parser = argparse.ArgumentParser()

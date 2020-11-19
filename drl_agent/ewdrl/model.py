@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 
-from cache_emu import torch_utils as ptu
+from py_cache_emu import torch_utils as ptu
 
 
 class RLModel(torch.nn.Module):

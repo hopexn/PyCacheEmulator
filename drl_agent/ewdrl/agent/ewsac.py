@@ -1,12 +1,11 @@
 import copy
 
+from py_cache_emu.utils import torch_utils as ptu
 from ..core import Agent
 from ..memory import *
 from ..model import RLModel, Temperature
 from ..nn import EWMLP, GaussianEWMLP
 from ..policy import *
-from cache_emu.utils import torch_utils as ptu
-
 
 
 class EWSacPiModel(RLModel):

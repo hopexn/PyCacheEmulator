@@ -2,7 +2,7 @@ import copy
 
 import torch
 
-from cache_emu.utils import torch_utils as ptu
+from py_cache_emu.utils import torch_utils as ptu
 from .ewdnn import EWDNN
 from ..core import Agent
 from ..memory import Memory

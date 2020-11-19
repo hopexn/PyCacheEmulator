@@ -1,10 +1,10 @@
 import torch
 import torch.nn.functional as F
 
-from cache_emu import Callback
-from cache_emu import torch_utils as ptu
-from cache_emu.utils import log_utils
-from cache_emu.utils import mp_utils as mpu
+from py_cache_emu import Callback
+from py_cache_emu import torch_utils as ptu
+from py_cache_emu.utils import log_utils
+from py_cache_emu.utils import mp_utils as mpu
 from .ewdrl import RLModel
 from .kd_model import KDWeights
 
@@ -12,7 +12,7 @@ from .kd_model import KDWeights
 class HardKDCallback(Callback):
     def __init__(self, model, memory,
                  batch_size=128, interval=10, lr=0.01, weights_path=None,
-                 k=0, alpha=0.01, **kwargs):
+                 k=0, **kwargs):
         super().__init__(interval=interval)
         
         self.model: RLModel = model
@@ -21,7 +21,7 @@ class HardKDCallback(Callback):
         self.batch_size = batch_size
         self.lr = lr
         self.weights_path = weights_path
-        self.ws = KDWeights(mpu.comm_size, lr, alpha=alpha, **kwargs)
+        self.ws = KDWeights(mpu.comm_size, lr, **kwargs)
         
         self.main_tag = kwargs.get("main_tag", "")
         self.sub_tag = kwargs.get("sub_tag", "")

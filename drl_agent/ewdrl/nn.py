@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from cache_emu import torch_utils as ptu
+from py_cache_emu import torch_utils as ptu
 
 
 class MLP(nn.Module):
