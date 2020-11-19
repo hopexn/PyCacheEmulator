@@ -37,7 +37,6 @@ class EWDNN(Agent):
         
         # 动作策略参数
         self.policy = GreedyQPolicy(content_dim)
-        # self.policy = DecayEpsGreedyQPolicy(content_dim, eps_min=0.01)
         
         # RL超参数
         self.gamma = gamma
@@ -56,8 +55,7 @@ class EWDNN(Agent):
         
         max_idx = action.min(dim=-1)[1]
         if max_idx < self.content_dim:
-            self.memory.store_distilling_transition(
-                observation[max_idx], reward[max_idx], next_observation[max_idx])
+            self.memory.store_kd_transition(observation[max_idx], reward[max_idx], next_observation[max_idx])
         
         observation = observation[:self.content_dim].unsqueeze(0)
         action = action[:self.content_dim].unsqueeze(0)
@@ -99,9 +97,6 @@ class EWDNN(Agent):
     
     def get_distilling_model(self):
         return self.v_model
-    
-    def get_distilling_memory(self):
-        return self.memory
     
     def get_models(self):
         return [self]

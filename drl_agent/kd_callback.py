@@ -1,5 +1,3 @@
-import gym
-import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -42,7 +40,7 @@ class HardKDCallback(Callback):
             self.ws.save_weights(self.weights_path, suffix="_{}".format(mpu.comm_size))
     
     def on_episode_end(self, **kwargs):
-        batch_inputs = self.memory.sample_observations1(self.batch_size)
+        batch_inputs = self.memory.sample_kd_transition(self.batch_size)
         if batch_inputs is None or len(batch_inputs) == 0:
             batch_inputs = torch.tensor([])
             batch_outputs = torch.tensor([])
@@ -147,9 +145,6 @@ class SoftKDCallback(HardKDCallback):
             # 根据kl散度定义实现
             log_probs = torch.log(probs + 1e-6)
             loss = (probs * (log_probs - log_target_probs)).mean()
-            # 使用pytorch的kl_div
-            # target_probs = torch.exp(log_target_probs)
-            # loss = torch.nn.functional.kl_div(probs, target_probs, reduction="batchmean")
         else:
             loss = - (probs * log_target_probs).mean()
         
@@ -177,45 +172,6 @@ class SoftKDCallback(HardKDCallback):
         self.ws.zero_grad()
         loss.backward()
         self.model.step()
-        self.ws.step()
-        
-        self.write_ws()
-        
-        return {"kd_loss": loss.cpu().item()}
-
-
-class RandomKDCallback(HardKDCallback):
-    def __init__(self, model, memory, batch_size=128, intervals=1, lr=0.01, tau=1.0, weights_path=None, k=2, **kwargs):
-        super().__init__(model, memory, batch_size, intervals, lr, tau, weights_path, k, **kwargs)
-        
-        self.observation_space = gym.spaces.box.Box(
-            low=np.zeros(shape=(batch_size, model.content_dim, model.feature_dim)),
-            high=np.ones(shape=(batch_size, model.content_dim, model.feature_dim)),
-        )
-    
-    def on_episode_end(self, **kwargs):
-        batch_inputs = ptu.from_numpy(self.observation_space.sample())
-        batch_outputs = self.model.forward_distilling(batch_inputs)
-        
-        batch_inputs_list = mpu.all_to_all(ptu.get_numpy(batch_inputs))
-        batch_outputs_list = mpu.all_to_all(ptu.get_numpy(batch_outputs))
-        
-        losses = []
-        for i, (batch_inputs, batch_outputs) in enumerate(zip(batch_inputs_list, batch_outputs_list)):
-            q_values = self.model.forward_distilling(ptu.from_numpy(batch_inputs))
-            loss = self.loss_fn(q_values, ptu.from_numpy(batch_outputs))
-            losses.append(loss)
-        
-        # 更新模型
-        loss2 = self.ws.forward2(losses, self.k)
-        self.model.zero_grad()
-        loss2.backward(retain_graph=True)
-        self.model.step()
-        
-        # 更新权重
-        loss = self.ws.forward(losses)
-        self.ws.zero_grad()
-        loss.backward()
         self.ws.step()
         
         self.write_ws()

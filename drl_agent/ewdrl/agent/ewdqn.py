@@ -1,11 +1,10 @@
 import copy
 
+from cache_emu.utils import torch_utils as ptu
 from ..core import Agent
 from ..memory import *
 from ..model import RLModel
 from ..policy import *
-from cache_emu.utils import torch_utils as ptu
-
 
 
 class EWQModel(RLModel):
@@ -23,7 +22,6 @@ class EWDQN(Agent):
     def __init__(self, content_dim, feature_dim, memory_size=10000, batch_size=32,
                  hidden_layer_units=[32, 8], lr=3e-4,
                  gamma=0.99, target_update=2, enable_double_q=False, **kwargs):
-        
         super().__init__(content_dim, feature_dim, **kwargs)
         
         print("Enable Double Q: ", enable_double_q)

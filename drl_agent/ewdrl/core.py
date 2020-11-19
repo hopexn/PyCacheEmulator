@@ -2,6 +2,7 @@ class Agent:
     def __init__(self, content_dim, feature_dim, **kwargs):
         self.content_dim = content_dim
         self.feature_dim = feature_dim
+        self.memory = None
     
     def forward(self, observation):
         raise NotImplementedError()
@@ -22,7 +23,7 @@ class Agent:
         raise NotImplementedError()
     
     def get_distilling_memory(self):
-        raise NotImplementedError()
+        return self.memory
 
 
 class QPolicy:

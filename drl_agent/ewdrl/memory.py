@@ -46,22 +46,10 @@ class Memory:
         
         return observations, actions, rewards, next_observations
     
-    def sample_observations(self, batch_size=32):
-        if self.__len__() == 0:
-            return None
-        indices = self._sample_indices(batch_size)
-        observations = torch.cat([self.observations[i] for i in indices], dim=0)
-        return observations
+    def store_kd_transition(self, observation, reward, next_observation):
+        self.distilling_buffer.append((observation, reward, next_observation))
     
-    def sample_observations1(self, batch_size=32):
-        n_samples = len(self.distilling_buffer)
-        if n_samples == 0:
-            return None
-        samples = random.sample(self.distilling_buffer, min(n_samples, batch_size))
-        observations = torch.cat([s[0].unsqueeze(0) for s in samples], dim=0)
-        return observations
-    
-    def sample_observations2(self, batch_size=32):
+    def sample_kd_transition(self, batch_size=32):
         n_samples = len(self.distilling_buffer)
         if n_samples == 0:
             return None
@@ -70,9 +58,6 @@ class Memory:
         rewards = torch.cat([s[1].unsqueeze(0) for s in samples], dim=0)
         next_observations = torch.cat([s[2].unsqueeze(0) for s in samples], dim=0)
         return observations, rewards, next_observations
-    
-    def store_distilling_transition(self, observation, reward, next_observation):
-        self.distilling_buffer.append((observation, reward, next_observation))
 
 
 class SequentialMemory(Memory):
