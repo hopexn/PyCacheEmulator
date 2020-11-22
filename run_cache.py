@@ -1,18 +1,21 @@
 import argparse
 import multiprocessing as mp
+import os
 
 import numpy as np
 import pandas as pd
 
-from py_cache_emu import *
 from drl_agent import RlCacheRunner
+from py_cache_emu import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--config_path", type=str, help="the path of experiment config file.", required=True)
+parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
 # 根目录路径
 config = proj_utils.load_config(args.config_path)
+proj_utils.manual_seed(args.seed)
 
 # 用于从子进程传递返回信息
 msg_queue = mp.Queue()
@@ -26,7 +29,7 @@ runner_config = proj_utils.load_runner_config(config.get("runner_config", "basel
 
 comm_size = config.get("comm_size", 1)
 mp_utils.init(comm_size)
-permute_data = config.get("permute_data", False)
+permute_data = config.get("data_permute", False)
 
 if permute_data:
     n_data_paths = len(data_config.get('data_path'))
@@ -59,4 +62,6 @@ while not msg_queue.empty():
     results.update(msg_queue.get())
 
 # 打印结果
-print(pd.DataFrame(results).T)
+res = pd.DataFrame(results).T
+print(res)
+res.to_csv(os.path.expanduser("~/default_log/{}.csv".format(config.get("log_id", 0000))))

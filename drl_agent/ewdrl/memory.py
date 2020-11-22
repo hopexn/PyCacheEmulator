@@ -57,6 +57,9 @@ class Memory:
         observations = torch.cat([s[0].unsqueeze(0) for s in samples], dim=0)
         rewards = torch.cat([s[1].unsqueeze(0) for s in samples], dim=0)
         next_observations = torch.cat([s[2].unsqueeze(0) for s in samples], dim=0)
+        
+        self.distilling_buffer.clear()
+        
         return observations, rewards, next_observations
 
 

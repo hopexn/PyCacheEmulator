@@ -33,10 +33,10 @@ class EWDNN(Agent):
         self.target_v_model = copy.deepcopy(self.v_model)
         
         # 创建ReplayBuffer
-        self.memory = SequentialMemory(memory_size)
+        self.memory = Memory(memory_size)
         
         # 动作策略参数
-        self.policy = GreedyQPolicy(content_dim)
+        self.policy = DecayEpsGreedyQPolicy(content_dim, eps_min=0)
         
         # RL超参数
         self.gamma = gamma
@@ -53,9 +53,14 @@ class EWDNN(Agent):
     def backward(self, observation, action, reward, next_observation):
         self.update_count += 1
         
-        max_idx = action.min(dim=-1)[1]
-        if max_idx < self.content_dim:
-            self.memory.store_kd_transition(observation[max_idx], reward[max_idx], next_observation[max_idx])
+        act_idx = action.min(dim=-1)[1]
+        if act_idx < self.content_dim:
+            self.memory.store_kd_transition(observation[act_idx], reward[act_idx], next_observation[act_idx])
+            while True:
+                rnd_idx = random.randint(0, self.content_dim)
+                if rnd_idx != act_idx:
+                    self.memory.store_kd_transition(observation[rnd_idx], reward[rnd_idx], next_observation[rnd_idx])
+                    break
         
         observation = observation[:self.content_dim].unsqueeze(0)
         action = action[:self.content_dim].unsqueeze(0)

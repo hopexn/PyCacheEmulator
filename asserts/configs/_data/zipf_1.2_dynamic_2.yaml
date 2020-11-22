@@ -1,0 +1,7 @@
+name: zipf_1.2_dynamic_2
+time_beg: 0
+time_end: 2000000
+time_int: 10
+info: "zipf_dynamic_2m_0.33_0.33_2"
+data_path:
+  - asserts/data/zipf/1.2/dynamic_2m_0.33_0.33_2.csv

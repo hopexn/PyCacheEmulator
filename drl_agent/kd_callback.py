@@ -11,24 +11,25 @@ from .kd_model import KDWeights
 
 class HardKDCallback(Callback):
     def __init__(self, model, memory,
-                 batch_size=128, interval=10, lr=0.01, weights_path=None,
-                 k=0, **kwargs):
+                 batch_size=128, interval=10, lr=0.01, alpha=1.0, weights_path=None,
+                 k=0, mode=0, **kwargs):
         super().__init__(interval=interval)
         
         self.model: RLModel = model
         self.memory = memory
         
         self.batch_size = batch_size
-        self.lr = lr
         self.weights_path = weights_path
-        self.ws = KDWeights(mpu.comm_size, lr, **kwargs)
-        
-        self.main_tag = kwargs.get("main_tag", "")
-        self.sub_tag = kwargs.get("sub_tag", "")
+        self.ws: KDWeights = KDWeights(mpu.comm_size, lr, alpha, **kwargs)
         
         self.loss_fn = F.mse_loss
         self.k = k
+        
+        self.main_tag = kwargs.get("main_tag", "")
+        self.sub_tag = kwargs.get("sub_tag", "")
         self.verbose = kwargs.get("verbose", False)
+        
+        self.mode = mode
     
     def on_game_begin(self, **kwargs):
         if self.weights_path is not None:
@@ -40,18 +41,25 @@ class HardKDCallback(Callback):
             self.ws.save_weights(self.weights_path, suffix="_{}".format(mpu.comm_size))
     
     def on_episode_end(self, **kwargs):
+        if self.mode == 0:
+            return self.kd_with_observation(**kwargs)
+        else:
+            return self.kd_with_transition(**kwargs)
+    
+    def kd_with_observation(self, **kwargs):
         batch_inputs = self.memory.sample_kd_transition(self.batch_size)
         if batch_inputs is None or len(batch_inputs) == 0:
-            batch_inputs = torch.tensor([])
-            batch_outputs = torch.tensor([])
+            obs_ipts, reward_ipts, next_obs_ipts = ptu.tensor([]), ptu.tensor([]), ptu.tensor([])
+            obs_opts, next_obs_opts = ptu.tensor([]), ptu.tensor([])
         else:
-            batch_outputs = self.model.forward_distilling(batch_inputs)
+            obs_ipts, reward_ipts, next_obs_ipts = batch_inputs
+            obs_opts = self.model.forward_distilling(obs_ipts)
         
-        batch_inputs_list = mpu.all_to_all(ptu.get_numpy(batch_inputs))
-        batch_outputs_list = mpu.all_to_all(ptu.get_numpy(batch_outputs))
+        obs_ipts_list = mpu.all_to_all(ptu.get_numpy(obs_ipts))
+        obs_opts_list = mpu.all_to_all(ptu.get_numpy(obs_opts))
         
         losses = []
-        for i, (batch_inputs, batch_outputs) in enumerate(zip(batch_inputs_list, batch_outputs_list)):
+        for i, (batch_inputs, batch_outputs) in enumerate(zip(obs_ipts_list, obs_opts_list)):
             loss = 0
             if len(batch_inputs) > 0:
                 q_values = self.model.forward_distilling(ptu.from_numpy(batch_inputs))
@@ -62,7 +70,52 @@ class HardKDCallback(Callback):
         if self.k <= 0:
             loss = self.ws.forward(losses)
         else:
-            loss = self.ws.forward_topk(losses, self.k)
+            loss = self.ws.forward_random_k(losses, self.k)
+        
+        self.ws.zero_grad()
+        self.model.zero_grad()
+        loss.backward()
+        self.model.step()
+        self.ws.step()
+        self.write_ws()
+        
+        return {"kd_loss": loss.cpu().item()}
+    
+    def kd_with_transition(self, **kwargs):
+        batch_inputs = self.memory.sample_kd_transition(self.batch_size)
+        if batch_inputs is None or len(batch_inputs) == 0:
+            obs_ipts, reward_ipts, next_obs_ipts = ptu.tensor([]), ptu.tensor([]), ptu.tensor([])
+            obs_opts, next_obs_opts = ptu.tensor([]), ptu.tensor([])
+        else:
+            obs_ipts, reward_ipts, next_obs_ipts = batch_inputs
+            obs_opts = self.model.forward_distilling(obs_ipts)
+            next_obs_opts = self.model.forward_distilling(next_obs_ipts)
+        
+        obs_ipts_list = mpu.all_to_all(ptu.get_numpy(obs_ipts))
+        reward_ipts_list = mpu.all_to_all(ptu.get_numpy(reward_ipts))
+        next_obs_ipts_list = mpu.all_to_all(ptu.get_numpy(next_obs_ipts))
+        obs_opts_list = mpu.all_to_all(ptu.get_numpy(obs_opts))
+        next_obs_opts_list = mpu.all_to_all(ptu.get_numpy(next_obs_opts))
+        
+        losses = []
+        for i, (obs_ipts, reward_ipts, next_obs_ipts, obs_opts, next_obs_opts) in enumerate(
+                zip(obs_ipts_list, reward_ipts_list, next_obs_ipts_list, obs_opts_list, next_obs_opts_list)):
+            
+            loss = 0
+            if len(obs_ipts) > 0:
+                state_values = self.model.forward_distilling(ptu.from_numpy(obs_ipts))
+                next_state_values = self.model.forward_distilling(ptu.from_numpy(next_obs_ipts))
+                
+                adv_values = ptu.from_numpy(reward_ipts + 0.99 * next_obs_opts - obs_opts)
+                loss = -(adv_values * (0.99 * next_state_values - state_values)).mean()
+            
+            losses.append(loss)
+        
+        # 更新权重, 更新模型
+        if self.k <= 0:
+            loss = self.ws.forward(losses)
+        else:
+            loss = self.ws.forward_random_k(losses, self.k)
         
         self.ws.zero_grad()
         self.model.zero_grad()
@@ -81,54 +134,6 @@ class HardKDCallback(Callback):
     
     def get_models(self, **kwargs):
         return [self.ws]
-
-
-class HardKDCallback2(HardKDCallback):
-    def on_episode_end(self, **kwargs):
-        info = {}
-        
-        batch_inputs = self.memory.sample_observations2(self.batch_size)
-        if batch_inputs is None or len(batch_inputs) == 0:
-            return info
-        
-        obs_ipts, reward_ipts, next_obs_ipts = batch_inputs
-        obs_opts = self.model.forward_distilling(obs_ipts)
-        next_obs_opts = self.model.forward_distilling(next_obs_ipts)
-        
-        obs_ipts_list = mpu.all_to_all(ptu.get_numpy(obs_ipts))
-        reward_ipts_list = mpu.all_to_all(ptu.get_numpy(reward_ipts))
-        next_obs_ipts_list = mpu.all_to_all(ptu.get_numpy(next_obs_ipts))
-        obs_opts_list = mpu.all_to_all(ptu.get_numpy(obs_opts))
-        next_obs_opts_list = mpu.all_to_all(ptu.get_numpy(next_obs_opts))
-        
-        losses = []
-        for i, (obs_ipts, reward_ipts, next_obs_ipts, obs_opts, next_obs_opts) in enumerate(
-                zip(obs_ipts_list, reward_ipts_list, next_obs_ipts_list, obs_opts_list, next_obs_opts_list)):
-            
-            loss = 0
-            if len(batch_inputs) > 0:
-                state_values = self.model.forward_distilling(ptu.from_numpy(obs_ipts))
-                next_state_values = self.model.forward_distilling(ptu.from_numpy(next_obs_ipts))
-                
-                adv_values = reward_ipts + 0.99 * next_obs_opts - obs_opts
-                loss = -(adv_values * (0.99 * next_state_values - state_values)).mean()
-            
-            losses.append(loss)
-        
-        # 更新权重, 更新模型
-        if self.k <= 0:
-            loss = self.ws.forward(losses)
-        else:
-            loss = self.ws.forward_topk(losses, self.k)
-        
-        self.ws.zero_grad()
-        self.model.zero_grad()
-        loss.backward()
-        self.model.step()
-        self.ws.step()
-        self.write_ws()
-        
-        return {"kd_loss": loss.cpu().item()}
 
 
 class SoftKDCallback(HardKDCallback):

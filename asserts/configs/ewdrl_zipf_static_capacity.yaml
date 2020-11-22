@@ -1,0 +1,19 @@
+#capacity: 10
+verbose: false
+log_id: "0032"
+comm_size: 1
+data_permute: false
+data_config: "zipf_1.2_static.yaml"
+feature_config: "drl.yaml"
+runner_config: "ewdrl_capacity.yaml"
+
+agent_config:
+  class_name: "EWDNN"
+  hidden_layer_units:
+    - 32
+    - 8
+  memory_size: 5000
+  batch_size: 128
+kd_config:
+  interval: 20
+  k: 2

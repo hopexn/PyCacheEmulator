@@ -1,0 +1,7 @@
+name: zipf_1.2_static_2m
+time_beg: 0
+time_end: 2000000
+time_int: 10
+info: "zipf_static_2m"
+data_path:
+  - asserts/data/zipf/1.2/static_2m.csv

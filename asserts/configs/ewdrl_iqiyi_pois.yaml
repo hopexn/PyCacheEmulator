@@ -1,6 +1,6 @@
-capacity: 10
-verbose: true
-log_id: "0000"
+capacity: 20
+verbose: false
+log_id: "0031"
 comm_size: 7
 data_permute: false
 data_config: "iqiyi_pois.yaml"
@@ -10,16 +10,10 @@ runner_config: "ewdrl_kd.yaml"
 agent_config:
   class_name: "EWDNN"
   hidden_layer_units:
+    - 256
     - 32
-    - 8
-  log_tau: -1
-  log_tau_clip: [ -6, 1 ]
-  min_entropy_ratio: 0.01
-  memory_size: 50000
+  memory_size: 5000
   batch_size: 128
-  use_kl_div_loss: True
-  update_tau_freq: 5
-  enable_double_q: False
 kd_config:
   interval: 20
-  k: 2
+  k: 3
