@@ -8,10 +8,9 @@ from .request import RequestLoader, RequestSlice
 
 
 class CacheEnv(gym.Env):
-    def __init__(self, capacity: int,
-                 data_config={}, feature_config={}, callback_config={}, **kwargs):
-        self.capacity = capacity
-        self.cache = Cache(capacity=capacity)
+    def __init__(self, capacity, data_config={}, feature_config={}, callback_config={}, **kwargs):
+        self.capacity = capacity if not isinstance(capacity, list) else capacity[kwargs.get('rank', 0)]
+        self.cache = Cache(capacity=self.capacity)
         self.loader = RequestLoader(**{**kwargs, **data_config})
         self.feature_manger = FeatureManager(
             max_contents=self.loader.get_max_contents(), **{**kwargs, **feature_config})
@@ -23,7 +22,7 @@ class CacheEnv(gym.Env):
             low=np.zeros((self.capacity + 1, self.feature_manger.dim), dtype=np.float32),
             high=np.ones((self.capacity + 1, self.feature_manger.dim), dtype=np.float32)
         )
-        self.action_space = gym.spaces.Discrete(capacity + 1)
+        self.action_space = gym.spaces.Discrete(self.capacity + 1)
         
         self.req_slice: RequestSlice = None
         self.missed_content = NoneContentType
@@ -128,7 +127,7 @@ class CacheEnv(gym.Env):
 
 
 class ListWiseCacheEnv(CacheEnv):
-    def __init__(self, capacity: int, data_config={}, feature_config={}, callback_config={}, **kwargs):
+    def __init__(self, capacity, data_config={}, feature_config={}, callback_config={}, **kwargs):
         super().__init__(capacity, data_config, feature_config, callback_config, **kwargs)
         self.action_space = gym.spaces.MultiDiscrete(self.capacity + 1)
     

@@ -17,8 +17,7 @@ class Memory:
         
         # 计数
         self.step = 0
-        
-        self.distilling_buffer = deque(maxlen=capacity)
+        self.distilling_buffer = deque(maxlen=2048)
     
     def __len__(self):
         return min(self.step, self.capacity)
@@ -58,7 +57,7 @@ class Memory:
         rewards = torch.cat([s[1].unsqueeze(0) for s in samples], dim=0)
         next_observations = torch.cat([s[2].unsqueeze(0) for s in samples], dim=0)
         
-        self.distilling_buffer.clear()
+        # self.distilling_buffer.clear()
         
         return observations, rewards, next_observations
 

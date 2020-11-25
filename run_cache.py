@@ -37,8 +37,11 @@ if permute_data:
 else:
     runner_ranks = np.arange(comm_size)
 
-runners = []
+# 获取结果
+results = {}
+
 for runner_name, runner_kwargs in runner_config:
+    runners = []
     for rank in runner_ranks:
         if runner_name == "RlCacheRunner":
             runner_class = RlCacheRunner
@@ -50,18 +53,20 @@ for runner_name, runner_kwargs in runner_config:
             data_config=data_config, feature_config=feature_config,
             **{**config, **runner_kwargs})
         runners.append(runner)
+    
+    # 启动进程
+    [runner.start() for runner in runners]
+    # 等待进程结束
+    [runner.join() for runner in runners]
+    
+    while not msg_queue.empty():
+        results.update(msg_queue.get())
 
-# 启动进程
-[runner.start() for runner in runners]
-# 等待进程结束
-[runner.join() for runner in runners]
-
-# 获取结果
-results = {}
-while not msg_queue.empty():
-    results.update(msg_queue.get())
-
-# 打印结果
+# 覆盖原有结果
 res = pd.DataFrame(results).T
+log_path = os.path.expanduser("~/default_log/{}.csv".format(config.get("log_id", "0000")))
+if os.path.exists(log_path):
+    res_ori = pd.read_csv(log_path, index_col=0)
+    res = pd.concat([res_ori, res])
+res.to_csv(log_path)
 print(res)
-res.to_csv(os.path.expanduser("~/default_log/{}.csv".format(config.get("log_id", "0000"))))

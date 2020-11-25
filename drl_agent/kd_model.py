@@ -30,11 +30,26 @@ class KDWeights(nn.Module):
     def forward_random_k(self, losses: list, k):
         softmax_ws = self.ws.softmax(dim=0)
         
-        loss = 0
-        indices = np.random.permutation(np.arange(self.num_agents))
+        loss = ptu.float_tensor(0, requires_grad=True)
+        # indices = np.random.permutation(np.arange(self.num_agents))
+        indices = np.random.choice(np.arange(self.num_agents), min(k, self.num_agents), replace=False)
+        
         for j in range(min(k, self.num_agents)):
             i = indices[j]
-            loss = loss + softmax_ws[i] * losses[i]
+            loss = loss + losses[i]  # * softmax_ws[i]
+        # loss = loss + self.alpha * (torch.dot(softmax_ws, softmax_ws.log()))
+        
+        return loss
+    
+    def forward_random_k_with_ref(self, losses: list, k):
+        softmax_ws = self.ws.softmax(dim=0)
+        
+        loss = ptu.float_tensor(0, requires_grad=True)
+        indices = np.random.permutation(np.arange(self.num_agents))
+        
+        for j in range(min(k, self.num_agents)):
+            i = indices[j]
+            loss = loss + losses[i] * softmax_ws[i]
         loss = loss + self.alpha * (torch.dot(softmax_ws, softmax_ws.log()))
         
         return loss
@@ -57,4 +72,3 @@ class KDWeights(nn.Module):
         suffix = "-" + str(self.num_agents) + suffix
         res = ptu.load_model(self, os.path.join(path, prefix + "kd_weights" + suffix + ".pt"))
         return res
-

@@ -52,7 +52,6 @@ class EWDNN(Agent):
     
     def backward(self, observation, action, reward, next_observation):
         self.update_count += 1
-        
         act_idx = action.min(dim=-1)[1]
         if act_idx < self.content_dim:
             self.memory.store_kd_transition(observation[act_idx], reward[act_idx], next_observation[act_idx])
@@ -61,6 +60,14 @@ class EWDNN(Agent):
                 if rnd_idx != act_idx:
                     self.memory.store_kd_transition(observation[rnd_idx], reward[rnd_idx], next_observation[rnd_idx])
                     break
+        # indices = np.random.choice(np.arange(self.content_dim), 2, replace=False)
+        # act_idx = action.min(dim=-1)[1]
+        # if act_idx < self.content_dim:
+        #     if act_idx != indices[0] and act_idx != indices[1]:
+        #         indices[0] = act_idx
+        #
+        # for idx in indices:
+        #     self.memory.store_kd_transition(observation[idx], reward[idx], next_observation[idx])
         
         observation = observation[:self.content_dim].unsqueeze(0)
         action = action[:self.content_dim].unsqueeze(0)
