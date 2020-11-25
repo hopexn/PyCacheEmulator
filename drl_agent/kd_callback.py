@@ -39,14 +39,16 @@ class HardKDCallback(Callback):
     def on_game_end(self, **kwargs):
         if self.weights_path is not None:
             self.ws.save_weights(self.weights_path, suffix="_{}".format(mpu.comm_size))
-    
+
     def on_episode_end(self, **kwargs):
         if self.mode == 0:
-            return self.kd_with_observation(**kwargs)
+            return self.kd_mode0(**kwargs)
+        elif self.mode == 1:
+            return self.kd_mode1(**kwargs)
         else:
-            return self.kd_with_transition(**kwargs)
-    
-    def kd_with_observation(self, **kwargs):
+            return self.kd_mode2(**kwargs)
+
+    def kd_mode0(self, **kwargs):
         batch_inputs = self.memory.sample_kd_transition(self.batch_size)
         if batch_inputs is None or len(batch_inputs) == 0:
             obs_ipts, reward_ipts, next_obs_ipts = ptu.tensor([]), ptu.tensor([]), ptu.tensor([])
@@ -54,10 +56,10 @@ class HardKDCallback(Callback):
         else:
             obs_ipts, reward_ipts, next_obs_ipts = batch_inputs
             obs_opts = self.model.forward_distilling(obs_ipts)
-        
+    
         obs_ipts_list = mpu.all_to_all(ptu.get_numpy(obs_ipts))
         obs_opts_list = mpu.all_to_all(ptu.get_numpy(obs_opts))
-        
+    
         losses = []
         for i, (batch_inputs, batch_outputs) in enumerate(zip(obs_ipts_list, obs_opts_list)):
             loss = 0
@@ -65,65 +67,95 @@ class HardKDCallback(Callback):
                 q_values = self.model.forward_distilling(ptu.from_numpy(batch_inputs))
                 loss = self.loss_fn(q_values, ptu.from_numpy(batch_outputs))
             losses.append(loss)
-        
+    
         # 更新权重, 更新模型
         if self.k <= 0:
             loss = self.ws.forward(losses)
         else:
             loss = self.ws.forward_random_k(losses, self.k)
-        
+    
         self.ws.zero_grad()
         self.model.zero_grad()
         loss.backward()
         self.model.step()
         self.ws.step()
         self.write_ws()
-        
-        return {"kd_loss": loss.cpu().item()}
     
-    def kd_with_transition(self, **kwargs):
+        return {"kd_loss": loss.cpu().item()}
+
+    def kd_mode1(self, **kwargs):
         batch_inputs = self.memory.sample_kd_transition(self.batch_size)
         if batch_inputs is None or len(batch_inputs) == 0:
-            obs_ipts, reward_ipts, next_obs_ipts = ptu.tensor([]), ptu.tensor([]), ptu.tensor([])
-            obs_opts, next_obs_opts = ptu.tensor([]), ptu.tensor([])
+            obs_ipts, adv_values = ptu.tensor([]), ptu.tensor([])
         else:
             obs_ipts, reward_ipts, next_obs_ipts = batch_inputs
             obs_opts = self.model.forward_distilling(obs_ipts)
             next_obs_opts = self.model.forward_distilling(next_obs_ipts)
-        
+            adv_values = reward_ipts + 0.99 * next_obs_opts - obs_opts
+    
         obs_ipts_list = mpu.all_to_all(ptu.get_numpy(obs_ipts))
-        reward_ipts_list = mpu.all_to_all(ptu.get_numpy(reward_ipts))
-        next_obs_ipts_list = mpu.all_to_all(ptu.get_numpy(next_obs_ipts))
-        obs_opts_list = mpu.all_to_all(ptu.get_numpy(obs_opts))
-        next_obs_opts_list = mpu.all_to_all(ptu.get_numpy(next_obs_opts))
-        
+        adv_values_list = mpu.all_to_all(ptu.get_numpy(adv_values))
+    
         losses = []
-        for i, (obs_ipts, reward_ipts, next_obs_ipts, obs_opts, next_obs_opts) in enumerate(
-                zip(obs_ipts_list, reward_ipts_list, next_obs_ipts_list, obs_opts_list, next_obs_opts_list)):
-            
+        for i, (obs_ipts, adv_values) in enumerate(zip(obs_ipts_list, adv_values_list)):
             loss = 0
             if len(obs_ipts) > 0:
                 state_values = self.model.forward_distilling(ptu.from_numpy(obs_ipts))
-                next_state_values = self.model.forward_distilling(ptu.from_numpy(next_obs_ipts))
-                
-                adv_values = ptu.from_numpy(reward_ipts + 0.99 * next_obs_opts - obs_opts)
-                loss = -(adv_values * (0.99 * next_state_values - state_values)).mean()
-            
+                loss = -(ptu.from_numpy(adv_values) * state_values).mean()
             losses.append(loss)
-        
+    
         # 更新权重, 更新模型
         if self.k <= 0:
             loss = self.ws.forward(losses)
         else:
             loss = self.ws.forward_random_k(losses, self.k)
-        
+    
         self.ws.zero_grad()
         self.model.zero_grad()
         loss.backward()
         self.model.step()
         self.ws.step()
         self.write_ws()
+    
+        return {"kd_loss": loss.cpu().item()}
+
+    def kd_mode2(self, **kwargs):
+        batch_inputs = self.memory.sample_kd_transition(self.batch_size)
+        if batch_inputs is None or len(batch_inputs) == 0:
+            obs_ipts, reward_ipts, next_obs_ipts = ptu.tensor([]), ptu.tensor([]), ptu.tensor([])
+        else:
+            obs_ipts, reward_ipts, next_obs_ipts = batch_inputs
+    
+        obs_ipts_list = mpu.all_to_all(ptu.get_numpy(obs_ipts))
+        reward_ipts_list = mpu.all_to_all(ptu.get_numpy(reward_ipts))
+        next_obs_ipts_list = mpu.all_to_all(ptu.get_numpy(next_obs_ipts))
+    
+        losses = []
+        for i, (obs_ipts, reward_ipts, next_obs_ipts) in enumerate(
+                zip(obs_ipts_list, reward_ipts_list, next_obs_ipts_list)):
         
+            loss = 0
+            if len(obs_ipts) > 0:
+                state_values = self.model.forward_distilling(ptu.from_numpy(obs_ipts))
+                next_state_values = self.model.forward_distilling(ptu.from_numpy(next_obs_ipts))
+                target = ptu.from_numpy(reward_ipts) + 0.99 * next_state_values
+                loss = F.mse_loss(state_values, target.detach())
+        
+            losses.append(loss)
+    
+        # 更新权重, 更新模型
+        if self.k <= 0:
+            loss = self.ws.forward(losses)
+        else:
+            loss = self.ws.forward_random_k(losses, self.k)
+    
+        self.ws.zero_grad()
+        self.model.zero_grad()
+        loss.backward()
+        self.model.step()
+        self.ws.step()
+        self.write_ws()
+    
         return {"kd_loss": loss.cpu().item()}
     
     def write_ws(self, **kwargs):

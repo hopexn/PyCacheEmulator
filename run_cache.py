@@ -64,4 +64,4 @@ while not msg_queue.empty():
 # 打印结果
 res = pd.DataFrame(results).T
 print(res)
-res.to_csv(os.path.expanduser("~/default_log/{}.csv".format(config.get("log_id", 0000))))
+res.to_csv(os.path.expanduser("~/default_log/{}.csv".format(config.get("log_id", "0000"))))
