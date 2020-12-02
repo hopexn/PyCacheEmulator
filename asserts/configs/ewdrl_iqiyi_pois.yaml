@@ -1,6 +1,6 @@
-capacity: 200
+capacity: 10
 verbose: false
-log_id: "0086"
+log_id: "0202"
 comm_size: 7
 data_permute: false
 data_config: "iqiyi_pois.yaml"
@@ -13,8 +13,9 @@ agent_config:
     - 256
     - 32
   memory_size: 5000
-  batch_size: 128
+  batch_size: 64
 kd_config:
   interval: 20
-  k: 3
+  k: -3
+sparsity: 0.2
 #  mode: 1

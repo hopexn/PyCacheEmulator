@@ -6,7 +6,6 @@ use_ogd_lfu_feature: false
 use_ogd_opt_feature: false
 use_bert_feature: false
 swf_w_lens:
-  - 1     #10s
   - 6     #1min
   - 30    #5min
   - 60    #10min

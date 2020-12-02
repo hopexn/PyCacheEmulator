@@ -8,14 +8,11 @@ from ..policy import *
 
 
 class EWQModel(RLModel):
-    def __init__(self, content_dim, feature_dim, hidden_layer_units: list, lr=3e-4):
-        super(EWQModel, self).__init__(content_dim, feature_dim, hidden_layer_units, lr)
-        self.content_dim = content_dim
-        
-        self.net = ptu.build_mlp(feature_dim, hidden_layer_units, 2)
-        
-        self.optim = torch.optim.Adam(self.net.parameters(), self.lr)
-        self.loss_fn = torch.nn.MSELoss()
+    def build_model(self, **kwargs):
+        net = ptu.build_mlp(self.feature_dim, self.hidden_layer_units, 2)
+        optim = torch.optim.Adam(net.parameters(), self.lr)
+        loss_fn = torch.nn.MSELoss()
+        return net, optim, loss_fn
 
 
 class EWDQN(Agent):
@@ -34,7 +31,7 @@ class EWDQN(Agent):
         
         # 动作策略参数
         self.policy = GreedyQPolicy(content_dim)
-        # self.policy = DecayEpsGreedyQPolicy(content_dim, eps_min=1e-4)
+        self.policy = DecayEpsGreedyQPolicy(content_dim, eps_min=1e-3)
         
         # RL超参数
         self.gamma = gamma

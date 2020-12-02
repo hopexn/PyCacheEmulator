@@ -1,11 +1,11 @@
-capacity: 50
+capacity: 10
 verbose: false
 data_config: "iqiyi12.yaml"
 feature_config: "drl.yaml"
 runner_config: "ewdrl_kd.yaml"
 
-log_id: "0063"
-comm_size: 8
+log_id: "0300"
+comm_size: 4
 data_permute: true
 
 agent_config:
@@ -14,11 +14,13 @@ agent_config:
     - 256
     - 32
   memory_size: 5000
-  batch_size: 128
+  batch_size: 64
 kd_config:
   interval: 20
-  k: 3
+  k: -3
 #  mode: 1
+sparsity: 0.3
+eager_mode: True
 
 # mode 0 传蒸馏样本 + 标签
 # mode 1 传obs adv_value

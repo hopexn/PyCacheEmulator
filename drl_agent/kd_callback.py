@@ -13,7 +13,7 @@ from .kd_model import KDWeights
 
 class HardKDCallback(Callback):
     def __init__(self, model, memory,
-                 batch_size=128, interval=10, lr=0.01, alpha=1e-3, weights_path="~/default_weights/",
+                 batch_size=128, interval=10, lr=0.001, alpha=0.01, weights_path="~/default_weights/",
                  k=0, mode=0, **kwargs):
         super().__init__(interval=interval)
         

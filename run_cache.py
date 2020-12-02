@@ -13,12 +13,13 @@ parser.add_argument("-c", "--config_path", type=str, help="the path of experimen
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
 
-# 根目录路径
-config = proj_utils.load_config(args.config_path)
 proj_utils.manual_seed(args.seed)
 
 # 用于从子进程传递返回信息
 msg_queue = mp.Queue()
+
+# 根目录路径
+config = proj_utils.load_config(args.config_path)
 
 # 数据配置
 data_config = proj_utils.load_data_config(config.pop("data_config", "iqiyi_pois.yaml"))
@@ -30,6 +31,7 @@ runner_config = proj_utils.load_runner_config(config.get("runner_config", "basel
 comm_size = config.get("comm_size", 1)
 mp_utils.init(comm_size)
 permute_data = config.get("data_permute", False)
+eager_mode = config.get("eager_mode", False)
 
 if permute_data:
     n_data_paths = len(data_config.get('data_path'))
@@ -39,9 +41,22 @@ else:
 
 # 获取结果
 results = {}
+runners = []
+
+
+def run():
+    # 启动进程
+    [runner.start() for runner in runners]
+    # 等待进程结束
+    [runner.join() for runner in runners]
+    
+    while not msg_queue.empty():
+        results.update(msg_queue.get())
+    
+    runners.clear()
+
 
 for runner_name, runner_kwargs in runner_config:
-    runners = []
     for rank in runner_ranks:
         if runner_name == "RlCacheRunner":
             runner_class = RlCacheRunner
@@ -54,13 +69,10 @@ for runner_name, runner_kwargs in runner_config:
             **{**config, **runner_kwargs})
         runners.append(runner)
     
-    # 启动进程
-    [runner.start() for runner in runners]
-    # 等待进程结束
-    [runner.join() for runner in runners]
-    
-    while not msg_queue.empty():
-        results.update(msg_queue.get())
+    if eager_mode:
+        run()
+
+run()
 
 # 覆盖原有结果
 res = pd.DataFrame(results).T

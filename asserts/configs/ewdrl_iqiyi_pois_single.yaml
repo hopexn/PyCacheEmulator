@@ -1,19 +1,19 @@
 capacity: 10
 verbose: true
-log_id: "0092"
-comm_size: 4
+log_id: "0095"
+comm_size: 1
 data_permute: false
 data_config: "iqiyi_pois.yaml"
 feature_config: "drl.yaml"
 runner_config: "ewdrl_single.yaml"
 
 agent_config:
-  class_name: "EWDNN"
+  class_name: "EWDQN"
   hidden_layer_units:
-    - 256
     - 32
+    - 8
   memory_size: 5000
-  batch_size: 128
+  batch_size: 32
 kd_config:
   interval: 5
-  k: -3
+  k: -4

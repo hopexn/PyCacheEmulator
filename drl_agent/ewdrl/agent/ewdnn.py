@@ -9,14 +9,11 @@ from ..policy import *
 
 
 class EWVModel(RLModel):
-    def __init__(self, content_dim, feature_dim, hidden_layer_units: list, lr=3e-4):
-        super(EWVModel, self).__init__(content_dim, feature_dim, hidden_layer_units, lr)
-        self.content_dim = content_dim
-        
-        self.net = EWMLP(feature_dim, hidden_layer_units)
-        
-        self.optim = torch.optim.Adam(self.net.parameters(), self.lr)
-        self.loss_fn = torch.nn.MSELoss()
+    def build_model(self, **kwargs):
+        net = EWMLP(self.feature_dim, self.hidden_layer_units)
+        optim = torch.optim.Adam(net.parameters(), self.lr)
+        loss_fn = torch.nn.MSELoss()
+        return net, optim, loss_fn
     
     def forward_distilling(self, x):
         return super().forward(x)
@@ -52,6 +49,7 @@ class EWDNN(Agent):
     
     def backward(self, observation, action, reward, next_observation):
         self.update_count += 1
+        
         act_idx = action.min(dim=-1)[1]
         if act_idx < self.content_dim:
             self.memory.store_kd_transition(observation[act_idx], reward[act_idx], next_observation[act_idx])

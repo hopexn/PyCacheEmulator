@@ -14,9 +14,10 @@ class RLModel(torch.nn.Module):
         self.hidden_layer_units = hidden_layer_units
         self.lr = lr
         
-        self.net = None
-        self.optim = None
-        self.loss_fn = None
+        self.net, self.optim, self.loss_fn = self.build_model(**kwargs)
+    
+    def build_model(self, **kwargs):
+        raise NotImplementedError()
     
     def forward(self, x):
         return self.net(x)

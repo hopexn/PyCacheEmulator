@@ -3,6 +3,7 @@ import pickle
 import random
 
 import numpy as np
+import pandas as pd
 import torch
 import yaml
 
@@ -23,7 +24,10 @@ def manual_project_root(project_root):
 
 def abs_path(*path):
     global _project_root
-    return os.path.join(_project_root, *path)
+    pathes = os.path.join(*path)
+    if not os.path.isabs(pathes):
+        pathes = os.path.join(_project_root, pathes)
+    return pathes
 
 
 # 加载yaml配置文件
@@ -31,6 +35,11 @@ def load_yaml(path):
     with open(abs_path(path), 'r', encoding="utf-8") as f:
         config_data = yaml.full_load(f)
     return config_data
+
+
+def load_csv(path, **kwargs):
+    data = pd.read_csv(abs_path(path), **kwargs)
+    return data
 
 
 def load_config(filename):
@@ -50,11 +59,11 @@ def load_runner_config(filename):
 
 
 def pickle_dump(obj, path):
-    with open(path, "wb") as f:
+    with open(abs_path(path), "wb") as f:
         pickle.dump(obj, f)
 
 
 def pickle_load(path):
-    with open(path, "rb") as f:
+    with open(abs_path(path), "rb") as f:
         obj = pickle.load(f)
     return obj

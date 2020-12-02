@@ -1,10 +1,10 @@
-capacity: 10
+capacity: 50
 verbose: true
 log_id: "0000"
 comm_size: 1
 data_permute: true
 data_config: "iqiyi_pois.yaml"
-feature_config: "drl.yaml"
+feature_config: "drl_simple.yaml"
 runner_config: "baselines.yaml"
 
 #agent_config:

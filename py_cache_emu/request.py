@@ -1,7 +1,9 @@
+import random
 from math import ceil
 
 import numpy as np
-import pandas as pd
+
+from .utils import proj_utils
 
 
 class RequestSlice:
@@ -29,7 +31,7 @@ class RequestSlice:
 
 class RequestLoader:
     def __init__(self, data_path: str, time_beg, time_end, time_int=60, **kwargs):
-        self.data = pd.read_csv(data_path[kwargs.get("rank", 0)])
+        self.data = proj_utils.load_csv(data_path[kwargs.get("rank", 0)])
         
         self.n_requests = len(self.data)
         self.timestamps = self.data["timestamp"].to_numpy(dtype=np.int)
@@ -38,6 +40,9 @@ class RequestLoader:
         self._slices = self._slice_by_time(self.timestamps, self.content_ids, time_beg, time_end, time_int)
         self.i_slice = 0
         self.n_slices = len(self._slices)
+        
+        self.sparsity = kwargs.get("sparsity", 1.0)
+        self.empty_slice = RequestSlice(np.zeros(0, dtype=np.int), np.zeros(0, dtype=np.int))
     
     def reset(self):
         self.i_slice = 0
@@ -70,10 +75,15 @@ class RequestLoader:
         return self.i_slice >= self.n_slices
     
     def next_slice(self):
-        assert not self.finished()
+        if self.finished():
+            return self.empty_slice
+        
         req_slice = self._slices[self.i_slice]
         self.i_slice += 1
-        return req_slice
+        if random.random() < self.sparsity:
+            return req_slice
+        else:
+            return self.empty_slice
     
     def get_max_contents(self):
         return self.content_ids.max() + 1
