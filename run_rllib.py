@@ -20,7 +20,6 @@ config["dueling"] = False
 config["prioritized_replay"] = False
 config["gamma"] = 0.1
 
-
 env_conf = proj_utils.load_yaml("asserts/configs/default.yaml")
 env_conf['data_config'] = proj_utils.load_data_config(env_conf.pop("data_config", "iqiyi_pois.yaml"))
 env_conf['feature_config'] = proj_utils.load_feature_config(env_conf.pop("feature_config", "drl.yaml"))

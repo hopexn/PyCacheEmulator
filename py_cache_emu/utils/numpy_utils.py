@@ -1,8 +1,6 @@
-import numba as nb
 import numpy as np
 
 EPS = 1e-6
-
 
 def softmax(values: np.array):
     values -= np.max(values)
@@ -16,12 +14,10 @@ def gaussian_likelihood(x: np.array, mu: np.array, log_std: np.array):
     return np.sum(pre_sum, axis=1)
 
 
-@nb.jit(nopython=True, parallel=True, cache=True)
 def polyak_sum(weights: np.array, target_weights: np.array, polyak: float):
     return target_weights * polyak + weights * (1.0 - polyak)
 
 
-@nb.jit(nopython=True, cache=True)
 def log_sum_exp(values: np.array, tau=1.0):
     if values.ndim == 1:
         max_value = np.max(values)
@@ -32,13 +28,11 @@ def log_sum_exp(values: np.array, tau=1.0):
     return log_sum_exp_values
 
 
-# nb.jit is invalid there
 def random_index(n, k, p=None):
     target_indices = np.random.choice(a=np.arange(n), size=k, p=p, replace=False)
     return target_indices
 
 
-# nb.jit is invalid there
 def top_k_index(a, k):
     target_indices = np.argpartition(a, -k)[-k:]
     return target_indices

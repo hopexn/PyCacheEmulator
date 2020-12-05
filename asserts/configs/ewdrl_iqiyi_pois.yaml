@@ -1,11 +1,11 @@
 capacity: 10
-verbose: false
-log_id: "0202"
-comm_size: 7
-data_permute: false
+
 data_config: "iqiyi_pois.yaml"
 feature_config: "drl.yaml"
 runner_config: "ewdrl_kd.yaml"
+
+comm_size: 7
+data_permute: false
 
 agent_config:
   class_name: "EWDNN"
@@ -16,6 +16,8 @@ agent_config:
   batch_size: 64
 kd_config:
   interval: 20
-  k: -3
-sparsity: 0.2
+
+log_id: "0301"
+n_neighbors: -4
+sparsity: 1.0
 #  mode: 1

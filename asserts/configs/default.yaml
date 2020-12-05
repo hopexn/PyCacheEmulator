@@ -1,5 +1,4 @@
 capacity: 50
-verbose: true
 log_id: "0000"
 comm_size: 1
 data_permute: true

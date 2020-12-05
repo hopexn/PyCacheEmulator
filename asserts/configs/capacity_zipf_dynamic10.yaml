@@ -1,0 +1,16 @@
+#capacity: 10
+comm_size: 1
+data_permute: false
+data_config: "zipf_1.2_dynamic_10.yaml"
+feature_config: "drl.yaml"
+runner_config: "capacity.yaml"
+
+agent_config:
+  class_name: "EWDNN"
+  hidden_layer_units:
+    - 256
+    - 32
+  memory_size: 5000
+  batch_size: 128
+
+log_id: "0002"

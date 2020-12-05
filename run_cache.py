@@ -9,18 +9,27 @@ from drl_agent import RlCacheRunner
 from py_cache_emu import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--config_path", type=str, help="the path of experiment config file.", required=True)
-parser.add_argument('--seed', type=int, default=0)
-args = parser.parse_args()
+parser.add_argument("config_path", type=str, help="the path of experiment config file.")
 
+parser.add_argument('-s', '--seed', type=int, default=0)
+parser.add_argument('-v', '--verbose', action='store_true', default=False)
+parser.add_argument('-e', '--eager_mode', action='store_true', default=False)
+
+parser.add_argument('-l', '--log_id', type=str, default=None)
+parser.add_argument('--capacity', type=int, default=None)
+parser.add_argument('--sparsity', type=float, default=None)
+parser.add_argument('--kd_mode', type=int, default=None)
+parser.add_argument('--n_neighbors', type=int, default=None)
+parser.add_argument('--comm_size', type=int, default=None)
+parser.add_argument('--rank', type=int, default=0)
+
+args, unkown_args = parser.parse_known_args()
+
+# 手动设置种子
 proj_utils.manual_seed(args.seed)
-
-# 用于从子进程传递返回信息
-msg_queue = mp.Queue()
 
 # 根目录路径
 config = proj_utils.load_config(args.config_path)
-
 # 数据配置
 data_config = proj_utils.load_data_config(config.pop("data_config", "iqiyi_pois.yaml"))
 # 特征配置
@@ -28,36 +37,66 @@ feature_config = proj_utils.load_feature_config(config.pop("feature_config", "dr
 # 配置运行的算法
 runner_config = proj_utils.load_runner_config(config.get("runner_config", "baselines.yaml"))
 
-comm_size = config.get("comm_size", 1)
-mp_utils.init(comm_size)
-permute_data = config.get("data_permute", False)
-eager_mode = config.get("eager_mode", False)
+permute_data = config.pop("data_permute", False)
+config['verbose'] = args.verbose
 
+if args.log_id is not None:
+    config['log_id'] = args.log_id
+
+if args.capacity is not None:
+    config['capacity'] = args.capacity
+
+if args.sparsity is not None:
+    config['sparsity'] = args.sparsity
+
+if args.kd_mode is not None:
+    config['kd_mode'] = args.kd_mode
+
+if args.n_neighbors is not None:
+    config['n_neighbors'] = args.n_neighbors
+
+if args.comm_size is not None:
+    config['comm_size'] = args.comm_size
+
+print("log_id: {}".format(config['log_id']))
+
+comm_size = config.pop("comm_size", 1)
+mp_utils.init(comm_size)
+n_data_paths = len(data_config.get('data_path'))
+runner_ranks = np.arange(min(n_data_paths, comm_size))
 if permute_data:
-    n_data_paths = len(data_config.get('data_path'))
-    runner_ranks = np.random.permutation(np.arange(n_data_paths))[:min(n_data_paths, comm_size)]
-else:
-    runner_ranks = np.arange(comm_size)
+    runner_ranks = np.random.permutation(runner_ranks)
+
+# 用于从子进程传递返回信息
+msg_queue = mp.Queue()
 
 # 获取结果
 results = {}
 runners = []
 
 
-def run():
+def start_runners(runners):
+    results = {}
+    
     # 启动进程
     [runner.start() for runner in runners]
     # 等待进程结束
     [runner.join() for runner in runners]
-    
+    # 保存结果
     while not msg_queue.empty():
         results.update(msg_queue.get())
-    
+    # 将进程从队列中清楚
     runners.clear()
+    
+    return results
 
 
-for runner_name, runner_kwargs in runner_config:
-    for rank in runner_ranks:
+for runner_name, runner_config in runner_config:
+    runner_kwargs = {**config, **runner_config}
+    max_ranks = min(n_data_paths, comm_size)
+    for i in range(max_ranks):
+        rank = runner_ranks[i] if max_ranks > 1 else (args.rank % n_data_paths)
+        
         if runner_name == "RlCacheRunner":
             runner_class = RlCacheRunner
         else:
@@ -66,13 +105,16 @@ for runner_name, runner_kwargs in runner_config:
         runner = runner_class(
             rank=rank, msg_queue=msg_queue,
             data_config=data_config, feature_config=feature_config,
-            **{**config, **runner_kwargs})
+            **runner_kwargs
+        )
         runners.append(runner)
     
-    if eager_mode:
-        run()
+    if args.eager_mode or config.get('eager_mode', False):
+        # eager execution模式开始运行
+        results.update(start_runners(runners))
 
-run()
+# 非eager execution模式开始运行
+results.update(start_runners(runners))
 
 # 覆盖原有结果
 res = pd.DataFrame(results).T

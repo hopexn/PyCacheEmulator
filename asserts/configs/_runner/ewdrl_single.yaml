@@ -1,2 +1,0 @@
-#- [ RlCacheRunner,{ enable_distilling: true, capacity: [ 10, 20, 30, 40, 50, 50 ] } ]
-- [ RlCacheRunner,{ enable_distilling: false, capacity: 10 } ]

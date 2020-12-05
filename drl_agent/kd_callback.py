@@ -14,7 +14,7 @@ from .kd_model import KDWeights
 class HardKDCallback(Callback):
     def __init__(self, model, memory,
                  batch_size=128, interval=10, lr=0.001, alpha=0.01, weights_path="~/default_weights/",
-                 k=0, mode=0, **kwargs):
+                 n_neighbors=0, kd_mode=0, **kwargs):
         super().__init__(interval=interval)
         
         self.model: RLModel = model
@@ -26,13 +26,13 @@ class HardKDCallback(Callback):
         self.ws: KDWeights = KDWeights(mpu.comm_size, lr, alpha, **kwargs)
         
         self.loss_fn = F.mse_loss
-        self.k = k
+        self.n_neighbors = n_neighbors
         
         self.main_tag = kwargs.get("main_tag", "")
         self.sub_tag = kwargs.get("sub_tag", "")
         self.verbose = kwargs.get("verbose", False)
         
-        self.mode = mode
+        self.mode = kd_mode
     
     def on_game_begin(self, **kwargs):
         if self.weights_path is not None:
@@ -57,8 +57,10 @@ class HardKDCallback(Callback):
             obs_ipts, reward_ipts, next_obs_ipts = ptu.tensor([]), ptu.tensor([]), ptu.tensor([])
             obs_opts, next_obs_opts = ptu.tensor([]), ptu.tensor([])
         else:
-            obs_ipts, reward_ipts, next_obs_ipts = batch_inputs
-            obs_opts = self.model.forward_distilling(obs_ipts)
+            with torch.no_grad():
+                obs_ipts, reward_ipts, next_obs_ipts = batch_inputs
+                obs_ipts = obs_ipts + 0.01 * torch.randn_like(obs_ipts)
+                obs_opts = self.model.forward_distilling(obs_ipts)
         
         obs_ipts_list = mpu.all_to_all(ptu.get_numpy(obs_ipts))
         obs_opts_list = mpu.all_to_all(ptu.get_numpy(obs_opts))
@@ -72,12 +74,12 @@ class HardKDCallback(Callback):
             losses.append(loss)
         
         # 更新权重, 更新模型
-        if self.k == 0:
+        if self.n_neighbors == 0:
             loss = self.ws.forward(losses)
-        elif self.k > 0:
-            loss = self.ws.forward_random_k(losses, self.k)
+        elif self.n_neighbors > 0:
+            loss = self.ws.forward_random_k(losses, self.n_neighbors)
         else:
-            loss = self.ws.forward_random_k_with_ref(losses, -self.k)
+            loss = self.ws.forward_random_k_with_ref(losses, -self.n_neighbors)
         
         self.ws.zero_grad()
         self.model.zero_grad()
@@ -110,12 +112,12 @@ class HardKDCallback(Callback):
             losses.append(loss)
         
         # 更新权重, 更新模型
-        if self.k == 0:
+        if self.n_neighbors == 0:
             loss = self.ws.forward(losses)
-        elif self.k > 0:
-            loss = self.ws.forward_random_k(losses, self.k)
+        elif self.n_neighbors > 0:
+            loss = self.ws.forward_random_k(losses, self.n_neighbors)
         else:
-            loss = self.ws.forward_random_k_with_ref(losses, -self.k)
+            loss = self.ws.forward_random_k_with_ref(losses, -self.n_neighbors)
         
         self.ws.zero_grad()
         self.model.zero_grad()
@@ -151,12 +153,12 @@ class HardKDCallback(Callback):
             losses.append(loss)
         
         # 更新权重, 更新模型
-        if self.k == 0:
+        if self.n_neighbors == 0:
             loss = self.ws.forward(losses)
-        elif self.k > 0:
-            loss = self.ws.forward_random_k(losses, self.k)
+        elif self.n_neighbors > 0:
+            loss = self.ws.forward_random_k(losses, self.n_neighbors)
         else:
-            loss = self.ws.forward_random_k_with_ref(losses, -self.k)
+            loss = self.ws.forward_random_k_with_ref(losses, -self.n_neighbors)
         
         self.ws.zero_grad()
         self.model.zero_grad()

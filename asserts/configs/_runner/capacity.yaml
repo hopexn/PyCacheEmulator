@@ -1,12 +1,3 @@
-- [ RlCacheRunner,{ capacity: 10 } ]
-- [ RlCacheRunner,{ capacity: 20 } ]
-- [ RlCacheRunner,{ capacity: 30 } ]
-- [ RlCacheRunner,{ capacity: 40 } ]
-- [ RlCacheRunner,{ capacity: 50 } ]
-- [ RlCacheRunner,{ capacity: 100 } ]
-- [ RlCacheRunner,{ capacity: 200 } ]
-- [ RlCacheRunner,{ capacity: 1000 } ]
-- [ RlCacheRunner,{ capacity: 2000 } ]
 - [ OgdOptCacheRunner,{ capacity: 10 } ]
 - [ OgdOptCacheRunner,{ capacity: 20 } ]
 - [ OgdOptCacheRunner,{ capacity: 30 } ]
@@ -34,3 +25,15 @@
 - [ LfuCacheRunner,{ capacity: 200 } ]
 - [ LfuCacheRunner,{ capacity: 1000 } ]
 - [ LfuCacheRunner,{ capacity: 2000 } ]
+- [ RlCacheRunner,{ capacity: 10 } ]
+- [ RlCacheRunner,{ capacity: 20 } ]
+- [ RlCacheRunner,{ capacity: 30 } ]
+- [ RlCacheRunner,{ capacity: 40 } ]
+- [ RlCacheRunner,{ capacity: 50 } ]
+- [ RlCacheRunner,{ capacity: 2000 } ]
+- [ RlCacheRunner,{ capacity: 1000 } ]
+- [ RlCacheRunner,{ capacity: 200 } ]
+- [ RlCacheRunner,{ capacity: 100 } ]
+
+
+
