@@ -22,6 +22,3 @@ n_neighbors: 4
 sparsity: 1.0
 eager_mode: False
 
-# mode 0 传蒸馏样本 + 标签
-# mode 1 传obs adv_value
-# mode 2 传obs reward next_obs

@@ -24,14 +24,15 @@ class HardKDCallback(Callback):
         self.weights_path = None
         if weights_path is not None:
             self.weights_path = os.path.expanduser(weights_path) + str(kwargs.get("rank", 0))
+            os.system("mkdir -p {}".format(self.weights_path))
         
-        os.system("mkdir -p {}".format(self.weights_path))
         self.ws: KDWeights = KDWeights(mpu.comm_size, lr, **kwargs)
         
         self.loss_fn = F.mse_loss
         self.n_neighbors = n_neighbors
         self.sigma = sigma
         
+        self.kd_mode = int(kwargs.get("kd_mode", 0))
         self.main_tag = kwargs.get("main_tag", "")
         self.sub_tag = kwargs.get("sub_tag", "")
         self.verbose = kwargs.get("verbose", False)

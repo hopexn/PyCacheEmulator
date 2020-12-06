@@ -56,7 +56,14 @@ class KDWeights(nn.Module):
         self.tau = TemperatureModel(log_tau=kwd_log_tau,
                                     min_entropy=min_entropy_ratio * np.log(num_agents),
                                     **kwargs)
-        self.ws = nn.Parameter(ptu.rand(num_agents, dtype=torch.float), requires_grad=True)
+        
+        self.kd_mode = int(kwargs.get("kd_mode", 0))
+        self.ws = ptu.ones(num_agents, dtype=torch.float)
+        if self.kd_mode == 2:  # adaptive
+            self.ws = nn.Parameter(self.ws + 1e-3 * ptu.randn(num_agents, dtype=torch.float), requires_grad=True)
+        else:  # fixed
+            self.ws = nn.Parameter(self.ws, requires_grad=True)
+        
         self.optim = torch.optim.Adam([self.ws], lr=self.lr)
     
     def forward(self, losses: list, k=0):
@@ -68,18 +75,23 @@ class KDWeights(nn.Module):
         
         ws_sm = (self.ws / self.tau.value().detach()).softmax(dim=0)
         
-        for idx in indices:
-            loss = loss + losses[idx] * ws_sm[idx]
-        
-        self.tau.backward(ws_sm)
+        if self.kd_mode == 2:
+            for idx in indices:
+                loss = loss + losses[idx] * ws_sm[idx]
+            self.tau.backward(ws_sm)
+        else:
+            for idx in indices:
+                loss = loss + losses[idx]
         
         return loss / k
     
     def zero_grad(self):
-        self.optim.zero_grad()
+        if self.kd_mode == 2:
+            self.optim.zero_grad()
     
     def step(self):
-        self.optim.step()
+        if self.kd_mode == 2:
+            self.optim.step()
     
     def get_dict(self):
         softmax_ws = ptu.get_numpy((self.ws / self.tau.value()).softmax(dim=0))

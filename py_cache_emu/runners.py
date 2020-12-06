@@ -6,11 +6,12 @@ from .envs import CacheEnv
 
 
 class CacheRunner(mp.Process):
-    def __init__(self, capacity, data_config, **kwargs):
+    def __init__(self, capacity, data_config, feature_config, **kwargs):
         super().__init__()
         
         self.capacity = capacity if not isinstance(capacity, list) else capacity[kwargs.get('rank', 0)]
         self.data_config = data_config
+        self.feature_config = feature_config
         
         self.msg_queue: mp.Queue = kwargs.get("msg_queue", None)
         self.env = None
@@ -22,12 +23,13 @@ class CacheRunner(mp.Process):
         )
         self.sub_tag = self.__class__.__name__[:-11]
         self.rank = kwargs.get('rank', 0)
+        self.kwargs = kwargs
     
     def run(self, **kwargs):
-        assert self.env is not None
-        
         result = {}
         res = self.on_run_begin(**kwargs)
+        assert self.env is not None
+        
         if res is not None:
             result.update(res)
         
@@ -53,7 +55,10 @@ class CacheRunner(mp.Process):
         return result
     
     def on_run_begin(self, **kwargs):
-        pass
+        self.env = CacheEnv(capacity=self.capacity,
+                            data_config=self.data_config, feature_config=self.feature_config,
+                            main_tag=self.main_tag, sub_tag=self.sub_tag,
+                            **self.kwargs)
     
     def on_run_end(self, **kwargs):
         pass
@@ -67,11 +72,8 @@ class CacheRunner(mp.Process):
 
 class RandomCacheRunner(CacheRunner):
     def __init__(self, capacity, data_config, feature_config, **kwargs):
-        super(RandomCacheRunner, self).__init__(capacity, data_config, **kwargs)
-        self.env = CacheEnv(capacity=capacity,
-                            data_config=data_config, feature_config={'use_random_feature': True},
-                            main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+        super(RandomCacheRunner, self).__init__(capacity, data_config, feature_config, **kwargs)
+        self.feature_config = {'use_random_feature': True}
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -79,11 +81,8 @@ class RandomCacheRunner(CacheRunner):
 
 class LruCacheRunner(CacheRunner):
     def __init__(self, capacity, data_config, feature_config, **kwargs):
-        super(LruCacheRunner, self).__init__(capacity, data_config, **kwargs)
-        self.env = CacheEnv(capacity=capacity,
-                            data_config=data_config, feature_config={'use_lru_feature': True},
-                            main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+        super(LruCacheRunner, self).__init__(capacity, data_config, feature_config, **kwargs)
+        self.feature_config = {'use_lru_feature': True}
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -91,11 +90,8 @@ class LruCacheRunner(CacheRunner):
 
 class LfuCacheRunner(CacheRunner):
     def __init__(self, capacity, data_config, feature_config, **kwargs):
-        super(LfuCacheRunner, self).__init__(capacity, data_config, **kwargs)
-        self.env = CacheEnv(capacity=capacity,
-                            data_config=data_config, feature_config={'use_lfu_feature': True},
-                            main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+        super(LfuCacheRunner, self).__init__(capacity, data_config, feature_config, **kwargs)
+        self.feature_config = {'use_lfu_feature': True}
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -103,11 +99,8 @@ class LfuCacheRunner(CacheRunner):
 
 class OgdOptCacheRunner(CacheRunner):
     def __init__(self, capacity, data_config, feature_config, **kwargs):
-        super(OgdOptCacheRunner, self).__init__(capacity, data_config, **kwargs)
-        self.env = CacheEnv(capacity=capacity,
-                            data_config=data_config, feature_config={'use_ogd_opt_feature': True},
-                            main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+        super(OgdOptCacheRunner, self).__init__(capacity, data_config, feature_config, **kwargs)
+        self.feature_config = {'use_ogd_opt_feature': True}
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -115,11 +108,8 @@ class OgdOptCacheRunner(CacheRunner):
 
 class OgdLruCacheRunner(CacheRunner):
     def __init__(self, capacity, data_config, feature_config, **kwargs):
-        super(OgdLruCacheRunner, self).__init__(capacity, data_config, **kwargs)
-        self.env = CacheEnv(capacity=capacity,
-                            data_config=data_config, feature_config={'use_ogd_lru_feature': True},
-                            main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+        super(OgdLruCacheRunner, self).__init__(capacity, data_config, feature_config, **kwargs)
+        self.feature_config = {'use_ogd_lru_feature': True}
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
@@ -127,11 +117,8 @@ class OgdLruCacheRunner(CacheRunner):
 
 class OgdLfuCacheRunner(CacheRunner):
     def __init__(self, capacity, data_config, feature_config, **kwargs):
-        super(OgdLfuCacheRunner, self).__init__(capacity, data_config, **kwargs)
-        self.env = CacheEnv(capacity=capacity,
-                            data_config=data_config, feature_config={'use_ogd_lfu_feature': True},
-                            main_tag=self.main_tag, sub_tag=self.sub_tag,
-                            **kwargs)
+        super(OgdLfuCacheRunner, self).__init__(capacity, data_config, feature_config, **kwargs)
+        self.feature_config = {'use_ogd_lfu_feature': True},
     
     def forward(self, observation):
         return np.argmin(observation.flatten())

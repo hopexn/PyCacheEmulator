@@ -22,4 +22,3 @@ kd_config:
 log_id: "2006"
 n_neighbors: 4
 sparsity: 1.0
-#  mode: 1

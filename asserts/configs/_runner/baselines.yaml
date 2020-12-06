@@ -2,4 +2,4 @@
 - [ LruCacheRunner,{ } ]
 - [ LfuCacheRunner,{ } ]
 - [ OgdOptCacheRunner,{ } ]
-- [ RlCacheRunner,{ enable_distilling: false } ]
+- [ RlCacheRunner,{ kd_mode: 0 } ]

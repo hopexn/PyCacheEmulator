@@ -34,9 +34,6 @@ def register_process(rank=-1):
             if pid not in _process_map:
                 _process_map[pid] = rank if rank >= 0 else _n_processes.get()
                 _n_processes.set(_n_processes.get() + 1)
-    
-    assert _n_processes.get() <= comm_size
-
 
 def all_to_all(data):
     global _buffers

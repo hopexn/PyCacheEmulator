@@ -1,1 +1,1 @@
-- [ RlCacheRunner,{ enable_distilling: true } ]
+- [ RlCacheRunner,{ kd_mode: 2 } ]

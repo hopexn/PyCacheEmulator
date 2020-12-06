@@ -4,7 +4,7 @@ data_config: "iqiyi_pois.yaml"
 feature_config: "drl.yaml"
 runner_config: "ewdrl_single_kd.yaml"
 
-comm_size: 1
+comm_size: 2
 data_permute: false
 
 agent_config:
@@ -19,4 +19,4 @@ kd_config:
   interval: 20
 
 log_id: "0302"
-sparsity: 0.9
+sparsity: 1.0

@@ -19,4 +19,4 @@ kd_config:
 
 data_permute: false
 log_id: "0301"
-sparsity: 0.1
+sparsity: 1.0

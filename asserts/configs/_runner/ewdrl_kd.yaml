@@ -1,5 +1,6 @@
-- [ RlCacheRunner,{ enable_distilling: true } ]
-- [ RlCacheRunner,{ enable_distilling: false } ]
+- [ RlCacheRunner,{ kd_mode: 2 } ]
+- [ RlCacheRunner,{ kd_mode: 1, eager_mode: True } ]
+- [ RlCacheRunner,{ kd_mode: 0 } ]
 - [ LruCacheRunner,{ } ]
 - [ LfuCacheRunner,{ } ]
 - [ OgdOptCacheRunner,{ } ]

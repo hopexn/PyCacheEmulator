@@ -1,2 +1,2 @@
-- [ RlCacheRunner,{ enable_distilling: false } ]
+- [ RlCacheRunner,{ kd_mode: 0 } ]
 - [ OgdOptCacheRunner,{ } ]

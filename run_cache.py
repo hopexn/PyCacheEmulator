@@ -72,6 +72,7 @@ if args.kwd_log_tau is not None:
     config['kwd_log_tau'] = args.kwd_log_tau
 
 print("log_id: {}".format(config['log_id']))
+print("kd_mode: {}".format(config.get('kd_mode', 0)))
 
 comm_size = config.pop("comm_size", 1)
 mp_utils.init(comm_size)
@@ -85,7 +86,7 @@ msg_queue = mp.Queue()
 
 # 获取结果
 results = {}
-runners = []
+batch_runners = [[]]
 
 
 def start_runners(runners):
@@ -107,6 +108,7 @@ def start_runners(runners):
 for runner_name, runner_config in runner_config:
     runner_kwargs = {**config, **runner_config}
     max_ranks = min(n_data_paths, comm_size)
+    runners = []
     for i in range(max_ranks):
         rank = runner_ranks[i] if max_ranks > 1 else (args.rank % n_data_paths)
         
@@ -121,13 +123,14 @@ for runner_name, runner_config in runner_config:
             **runner_kwargs
         )
         runners.append(runner)
-    
-    if args.eager_mode or config.get('eager_mode', False):
-        # eager execution模式开始运行
-        results.update(start_runners(runners))
+    print(runner_kwargs.get("eager_mode", False))
+    if args.eager_mode or runner_kwargs.get("eager_mode", False):
+        batch_runners.append(runners)
+    else:
+        batch_runners[0].extend(runners)
 
-# 非eager execution模式开始运行
-results.update(start_runners(runners))
+for runners in batch_runners:
+    results.update(start_runners(runners))
 
 # 覆盖原有结果
 res = pd.DataFrame(results).T
