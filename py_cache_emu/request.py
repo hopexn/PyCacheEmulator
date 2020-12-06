@@ -1,4 +1,4 @@
-import random
+import math
 from math import ceil
 
 import numpy as np
@@ -7,13 +7,20 @@ from .utils import proj_utils
 
 
 class RequestSlice:
-    def __init__(self, timestamps, content_ids):
+    def __init__(self, timestamps, content_ids, sparsity=1.0):
         assert len(timestamps) == len(content_ids)
         
-        self.timestamps = timestamps
-        self.content_ids = content_ids
+        n_requests = len(timestamps)
+        self.size = int(math.ceil(n_requests * sparsity))
         
-        self.size = len(timestamps)
+        indices = sorted(np.random.choice(
+            np.arange(n_requests),
+            size=self.size,
+            replace=(sparsity > 1.0)))
+        
+        self.timestamps = timestamps[indices]
+        self.content_ids = content_ids[indices]
+        
         self.ptr = 0
     
     def reset(self):
@@ -37,11 +44,13 @@ class RequestLoader:
         self.timestamps = self.data["timestamp"].to_numpy(dtype=np.int)
         self.content_ids = self.data["content_id"].to_numpy(dtype=np.int)
         
-        self._slices = self._slice_by_time(self.timestamps, self.content_ids, time_beg, time_end, time_int)
+        self.sparsity = kwargs.get("sparsity", 1.0)
+        self._slices = self._slice_by_time(self.timestamps, self.content_ids,
+                                           time_beg, time_end, time_int,
+                                           self.sparsity)
         self.i_slice = 0
         self.n_slices = len(self._slices)
         
-        self.sparsity = kwargs.get("sparsity", 1.0)
         self.empty_slice = RequestSlice(np.zeros(0, dtype=np.int), np.zeros(0, dtype=np.int))
     
     def reset(self):
@@ -52,7 +61,7 @@ class RequestLoader:
     def close(self):
         pass
     
-    def _slice_by_time(self, timestamps, content_ids, t_beg, t_end, t_int):
+    def _slice_by_time(self, timestamps, content_ids, t_beg, t_end, t_int, sparsity):
         t_beg, t_end, t_int = int(t_beg), int(t_end), int(t_int)
         assert t_end >= t_beg and t_int > 0 and len(timestamps) == len(content_ids)
         slices = []
@@ -65,7 +74,8 @@ class RequestLoader:
                 ptr_end += 1
             slices.append(RequestSlice(
                 timestamps=timestamps[ptr_beg:ptr_end],
-                content_ids=content_ids[ptr_beg:ptr_end]
+                content_ids=content_ids[ptr_beg:ptr_end],
+                sparsity=sparsity
             ))
             ptr_beg = ptr_end
             last_time = next_time
@@ -80,10 +90,7 @@ class RequestLoader:
         
         req_slice = self._slices[self.i_slice]
         self.i_slice += 1
-        if random.random() < self.sparsity:
-            return req_slice
-        else:
-            return self.empty_slice
+        return req_slice
     
     def get_max_contents(self):
         return self.content_ids.max() + 1

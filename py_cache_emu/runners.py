@@ -21,6 +21,7 @@ class CacheRunner(mp.Process):
             self.capacity,
         )
         self.sub_tag = self.__class__.__name__[:-11]
+        self.rank = kwargs.get('rank', 0)
     
     def run(self, **kwargs):
         assert self.env is not None

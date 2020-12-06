@@ -52,20 +52,9 @@ class EWDNN(Agent):
         
         act_idx = action.min(dim=-1)[1]
         if act_idx < self.content_dim:
-            self.memory.store_kd_transition(observation[act_idx], reward[act_idx], next_observation[act_idx])
-            while True:
-                rnd_idx = random.randint(0, self.content_dim)
-                if rnd_idx != act_idx:
-                    self.memory.store_kd_transition(observation[rnd_idx], reward[rnd_idx], next_observation[rnd_idx])
-                    break
-        # indices = np.random.choice(np.arange(self.content_dim), 2, replace=False)
-        # act_idx = action.min(dim=-1)[1]
-        # if act_idx < self.content_dim:
-        #     if act_idx != indices[0] and act_idx != indices[1]:
-        #         indices[0] = act_idx
-        #
-        # for idx in indices:
-        #     self.memory.store_kd_transition(observation[idx], reward[idx], next_observation[idx])
+            sample = torch.cat([observation[act_idx].unsqueeze(0),
+                                next_observation[act_idx].unsqueeze(0)], dim=0)
+            self.memory.store_kd_sample(sample)
         
         observation = observation[:self.content_dim].unsqueeze(0)
         action = action[:self.content_dim].unsqueeze(0)

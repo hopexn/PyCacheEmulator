@@ -5,8 +5,8 @@ from py_cache_emu import torch_utils as ptu
 from py_cache_emu.runners import CacheRunner
 from py_cache_emu.utils import mp_utils as mpu
 from . import config
-from .kd_callback import eval_callback_class
 from .ewdrl import eval_agent_class
+from .kd_callback import eval_callback_class
 
 
 class RlCacheRunner(CacheRunner):
@@ -51,9 +51,11 @@ class RlCacheRunner(CacheRunner):
             **{**self.kwargs, **self.agent_config})
         
         if self.enable_distilling:
-            mpu.register_process()
+            mpu.register_process(self.rank)
             kd_config = self.kwargs.get("kd_config", config.DEFAULT_DISTILLING_CONFIG)
-            kd_class = eval_callback_class(kd_config.get("class_name", "HardKDCallback"))
+            kd_class_name = kd_config.get("class_name", "HardKDCallback")
+            print(kd_class_name)
+            kd_class = eval_callback_class(kd_class_name)
             kd_callback = kd_class(
                 model=self.agent.get_distilling_model(), memory=self.agent.memory,
                 main_tag=self.main_tag, sub_tag=self.sub_tag,

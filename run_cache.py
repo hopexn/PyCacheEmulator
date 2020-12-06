@@ -18,10 +18,14 @@ parser.add_argument('-e', '--eager_mode', action='store_true', default=False)
 parser.add_argument('-l', '--log_id', type=str, default=None)
 parser.add_argument('--capacity', type=int, default=None)
 parser.add_argument('--sparsity', type=float, default=None)
-parser.add_argument('--kd_mode', type=int, default=None)
+parser.add_argument('--kd_tau', type=float, default=None)
 parser.add_argument('--n_neighbors', type=int, default=None)
 parser.add_argument('--comm_size', type=int, default=None)
 parser.add_argument('--rank', type=int, default=0)
+
+parser.add_argument('--kdw_lr', type=float, default=None)
+parser.add_argument('--kwd_log_tau', type=float, default=None)
+parser.add_argument('--min_entropy_ratio', type=float, default=None)
 
 args, unkown_args = parser.parse_known_args()
 
@@ -49,14 +53,23 @@ if args.capacity is not None:
 if args.sparsity is not None:
     config['sparsity'] = args.sparsity
 
-if args.kd_mode is not None:
-    config['kd_mode'] = args.kd_mode
+if args.kd_tau is not None:
+    config['kd_tau'] = args.kd_tau
 
 if args.n_neighbors is not None:
     config['n_neighbors'] = args.n_neighbors
 
 if args.comm_size is not None:
     config['comm_size'] = args.comm_size
+
+if args.kdw_lr is not None:
+    config['kdw_lr'] = args.kdw_lr
+
+if args.min_entropy_ratio is not None:
+    config['min_entropy_ratio'] = args.min_entropy_ratio
+
+if args.kwd_log_tau is not None:
+    config['kwd_log_tau'] = args.kwd_log_tau
 
 print("log_id: {}".format(config['log_id']))
 

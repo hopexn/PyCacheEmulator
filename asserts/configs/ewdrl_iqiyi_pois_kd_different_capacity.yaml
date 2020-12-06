@@ -6,12 +6,9 @@ capacity:
   - 30
   - 20
   - 40
-log_id: "0095"
-comm_size: 1
-data_permute: false
 data_config: "iqiyi12.yaml"
 feature_config: "drl.yaml"
-runner_config: "ewdrl_kd_different_capacity.yaml"
+runner_config: "ewdrl_kd.yaml"
 
 agent_config:
   class_name: "EWDQN"
@@ -20,6 +17,16 @@ agent_config:
     - 32
   memory_size: 5000
   batch_size: 64
+
 kd_config:
+  class_name: SoftKDCallback
   interval: 20
-n_neighbors: -4
+
+# kdw_lr: 3e-4
+# min_entropy_ratio: 0.8
+# kwd_log_tau
+
+log_id: "0095"
+comm_size: 7
+data_permute: false
+n_neighbors: 4

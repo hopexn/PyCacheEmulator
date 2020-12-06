@@ -21,7 +21,7 @@ def init(_comm_size):
     _buffers = manager.list([[] for _ in range(comm_size)])
 
 
-def register_process():
+def register_process(rank=-1):
     global _buffers
     global _barrier
     global _n_processes
@@ -32,7 +32,7 @@ def register_process():
     if pid not in _process_map:
         with _mutex:
             if pid not in _process_map:
-                _process_map[pid] = _n_processes.get()
+                _process_map[pid] = rank if rank >= 0 else _n_processes.get()
                 _n_processes.set(_n_processes.get() + 1)
     
     assert _n_processes.get() <= comm_size
