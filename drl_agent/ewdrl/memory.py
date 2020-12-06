@@ -55,8 +55,8 @@ class Memory:
         
         samples = random.sample(self.distilling_buffer, min(n_samples, batch_size))
         # self.distilling_buffer.clear()
-        
-        return torch.cat(samples, dim=0)
+        samples = torch.cat([s.unsqueeze(0) for s in samples], dim=0)
+        return samples
 
 
 class SequentialMemory(Memory):

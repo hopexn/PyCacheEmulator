@@ -13,7 +13,7 @@ from .kd_model import KDWeights
 
 class HardKDCallback(Callback):
     def __init__(self, model, memory,
-                 batch_size=128, interval=10, lr=0.001, sigma=1e-2, weights_path=None,
+                 batch_size=128, interval=10, lr=0.001, sigma=1e-3, weights_path=None,
                  n_neighbors=0, **kwargs):
         super().__init__(interval=interval)
         
@@ -90,7 +90,7 @@ class HardKDCallback(Callback):
 
 class SoftKDCallback(HardKDCallback):
     def __init__(self, model, memory, batch_size=128, interval=10, lr=0.001, sigma=1e-2,
-                 weights_path=None, n_neighbors=0, kd_tau=1.0, use_kl_div_loss=False, **kwargs):
+                 weights_path=None, n_neighbors=0, kd_tau=1.0, use_kl_div_loss=True, **kwargs):
         super().__init__(model, memory, batch_size, interval, lr, sigma, weights_path, n_neighbors, **kwargs)
         
         self.loss_fn = self.my_loss_func
