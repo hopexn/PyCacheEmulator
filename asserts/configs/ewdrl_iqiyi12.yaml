@@ -5,7 +5,7 @@ feature_config: "drl.yaml"
 runner_config: "ewdrl_kd.yaml"
 
 comm_size: 8
-data_permute: false
+data_permute: true
 
 agent_config:
   class_name: "EWDNN"
