@@ -72,14 +72,13 @@ if args.kwd_log_tau is not None:
     config['kwd_log_tau'] = args.kwd_log_tau
 
 print("log_id: {}".format(config['log_id']))
-print("kd_mode: {}".format(config.get('kd_mode', 0)))
 
 comm_size = config.pop("comm_size", 1)
 mp_utils.init(comm_size)
 n_data_paths = len(data_config.get('data_path'))
-runner_ranks = np.arange(min(n_data_paths, comm_size))
+data_ranks = np.arange(n_data_paths)
 if permute_data:
-    runner_ranks = np.random.permutation(runner_ranks)
+    data_ranks = np.random.permutation(data_ranks)
 
 # 用于从子进程传递返回信息
 msg_queue = mp.Queue()
@@ -107,10 +106,10 @@ def start_runners(runners):
 
 for runner_name, runner_config in runner_config:
     runner_kwargs = {**config, **runner_config}
-    max_ranks = min(n_data_paths, comm_size)
     runners = []
-    for i in range(max_ranks):
-        rank = runner_ranks[i] if max_ranks > 1 else (args.rank % n_data_paths)
+    print("kd_mode: {}".format(runner_kwargs.get('kd_mode', 0)))
+    for rank in range(comm_size):
+        data_rank = data_ranks[rank % n_data_paths] if comm_size > 1 else (args.rank % n_data_paths)
         
         if runner_name == "RlCacheRunner":
             runner_class = RlCacheRunner
@@ -118,7 +117,7 @@ for runner_name, runner_config in runner_config:
             runner_class = eval_runner_class(runner_name)
         
         runner = runner_class(
-            rank=rank, msg_queue=msg_queue,
+            rank=rank, data_rank=data_rank, msg_queue=msg_queue,
             data_config=data_config, feature_config=feature_config,
             **runner_kwargs
         )

@@ -38,7 +38,7 @@ class RequestSlice:
 
 class RequestLoader:
     def __init__(self, data_path: str, time_beg, time_end, time_int=60, **kwargs):
-        self.data = proj_utils.load_csv(data_path[kwargs.get("rank", 0)])
+        self.data = proj_utils.load_csv(data_path[kwargs.get("data_rank", 0)])
         
         self.n_requests = len(self.data)
         self.timestamps = self.data["timestamp"].to_numpy(dtype=np.int)

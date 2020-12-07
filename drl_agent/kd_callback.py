@@ -33,6 +33,7 @@ class HardKDCallback(Callback):
         self.sigma = sigma
         
         self.kd_mode = int(kwargs.get("kd_mode", 0))
+        self.rank = int(kwargs.get("rank", 0))
         self.main_tag = kwargs.get("main_tag", "")
         self.sub_tag = kwargs.get("sub_tag", "")
         self.verbose = kwargs.get("verbose", False)
@@ -63,10 +64,8 @@ class HardKDCallback(Callback):
             with torch.no_grad():
                 sample_ipts += self.sigma * torch.randn_like(sample_ipts)
                 sample_opts = self.model.forward_distilling(sample_ipts)
-        
-        sample_ipts_list = mpu.all_to_all(ptu.get_numpy(sample_ipts))
-        sample_opts_list = mpu.all_to_all(ptu.get_numpy(sample_opts))
-        
+        sample_ipts_list = mpu.all_to_all(ptu.get_numpy(sample_ipts), self.rank)
+        sample_opts_list = mpu.all_to_all(ptu.get_numpy(sample_opts), self.rank)
         losses = []
         for i, (sample_ipts, sample_opts) in enumerate(zip(sample_ipts_list, sample_opts_list)):
             loss = ptu.float_tensor(0, requires_grad=True)

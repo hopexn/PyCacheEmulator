@@ -51,7 +51,6 @@ class RlCacheRunner(CacheRunner):
             **{**self.kwargs, **self.agent_config})
         
         if self.kd_mode > 0:
-            mpu.register_process(self.rank)
             kd_config = self.kwargs.get("kd_config", config.DEFAULT_DISTILLING_CONFIG)
             kd_class_name = kd_config.get("class_name", "HardKDCallback")
             print(self.sub_tag, kd_class_name)

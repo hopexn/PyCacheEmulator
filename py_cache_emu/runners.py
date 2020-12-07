@@ -16,13 +16,15 @@ class CacheRunner(mp.Process):
         self.msg_queue: mp.Queue = kwargs.get("msg_queue", None)
         self.env = None
         
+        self.rank = kwargs.get('rank', 0)
+        self.data_rank = kwargs.get('data_rank', 0)
+        
         self.main_tag = "{}/{}/{}".format(
             data_config.get("name", ""),
-            kwargs.get("rank", 0),
+            self.data_rank,
             self.capacity,
         )
         self.sub_tag = self.__class__.__name__[:-11]
-        self.rank = kwargs.get('rank', 0)
         self.kwargs = kwargs
     
     def run(self, **kwargs):
