@@ -82,14 +82,16 @@ class KDWeights(nn.Module):
             for idx in indices:
                 loss = loss + losses[idx] * self.ws_sm[idx]
         elif self.kd_mode == 3:
+            sum_exp_minus_loss = 0
             for idx in indices:
                 loss = loss + losses[idx]
                 exp_minus_loss = (-losses[idx].detach()).exp().detach()
                 loss_ws = loss_ws + self.ws_sm[idx].log() * exp_minus_loss
+                sum_exp_minus_loss = sum_exp_minus_loss + exp_minus_loss
             
-            loss = loss + loss_ws
+            loss = loss / k + loss_ws / sum_exp_minus_loss
         
-        return loss / k
+        return loss
     
     # def forward(self, losses: list, k=0):
     #     # Backup
@@ -122,18 +124,13 @@ class KDWeights(nn.Module):
         return {"KDW{}".format(i): w for i, w in enumerate(softmax_ws)}
     
     def save_weights(self, path, prefix="", suffix=""):
-        if self.kd_mode == 2:
-            prefix += "adaptive_"
-        elif self.kd_mode == 1:
-            prefix += "fixed_"
-        suffix = "-" + str(self.num_agents) + suffix
+        suffix = "-" + str(self.num_agents) + suffix + "_{}".format(self.kd_mode)
         ptu.save_model(self, os.path.join(path, prefix + "kd_weights" + suffix + ".pt"))
+        self.tau.save_weights(os.path.join(path), prefix=prefix, suffix=suffix)
     
     def load_weights(self, path, prefix="", suffix=""):
-        if self.kd_mode == 2:
-            prefix += "adaptive_"
-        elif self.kd_mode == 1:
-            prefix += "fixed_"
-        suffix = "-" + str(self.num_agents) + suffix
+        suffix = "-" + str(self.num_agents) + suffix + "_{}".format(self.kd_mode)
         res = ptu.load_model(self, os.path.join(path, prefix + "kd_weights" + suffix + ".pt"))
+        self.tau.load_weights(os.path.join(path), prefix=prefix, suffix=suffix)
         return res
+ 

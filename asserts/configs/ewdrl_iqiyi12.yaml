@@ -19,6 +19,6 @@ kd_config:
 #  class_name: SoftKDCallback
   interval: 20
 
-log_id: "2007"
+log_id: "2008"
 n_neighbors: 4
 sparsity: 1.0

@@ -15,7 +15,7 @@ agent_config:
   class_name: "EWDNN"
   hidden_layer_units:
     - 256
-    - 32
+    - 128
   memory_size: 2000
   batch_size: 64
 
@@ -23,7 +23,7 @@ kd_config:
 #  class_name: SoftKDCallback
   interval: 20
 
-log_id: "20047"
+log_id: "20055"
 comm_size: 8
 data_permute: True
 n_neighbors: 4
