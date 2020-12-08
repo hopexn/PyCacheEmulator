@@ -7,11 +7,14 @@ import pandas as pd
 import torch
 import yaml
 
+seed = 0
 _project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 
 # 设置随机种子
-def manual_seed(seed=0):
+def manual_seed(_seed=0):
+    global seed
+    seed = _seed
     random.seed(seed)
     np.random.seed(seed)
     torch.random.manual_seed(seed)

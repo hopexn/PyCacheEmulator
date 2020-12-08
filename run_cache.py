@@ -11,7 +11,7 @@ from py_cache_emu import *
 parser = argparse.ArgumentParser()
 parser.add_argument("config_path", type=str, help="the path of experiment config file.")
 
-parser.add_argument('-s', '--seed', type=int, default=0)
+parser.add_argument('-s', '--seed', type=int, default=1)
 parser.add_argument('-v', '--verbose', action='store_true', default=False)
 parser.add_argument('-e', '--eager_mode', action='store_true', default=False)
 
@@ -74,7 +74,6 @@ if args.kwd_log_tau is not None:
 print("log_id: {}".format(config['log_id']))
 
 comm_size = config.pop("comm_size", 1)
-mp_utils.init(comm_size)
 n_data_paths = len(data_config.get('data_path'))
 data_ranks = np.arange(n_data_paths)
 if permute_data:
@@ -107,7 +106,8 @@ def start_runners(runners):
 for runner_name, runner_config in runner_config:
     runner_kwargs = {**config, **runner_config}
     runners = []
-    print("kd_mode: {}".format(runner_kwargs.get('kd_mode', 0)))
+    
+    comm = mp_utils.init(comm_size)
     for rank in range(comm_size):
         data_rank = data_ranks[rank % n_data_paths] if comm_size > 1 else (args.rank % n_data_paths)
         
@@ -117,13 +117,15 @@ for runner_name, runner_config in runner_config:
             runner_class = eval_runner_class(runner_name)
         
         runner = runner_class(
-            rank=rank, data_rank=data_rank, msg_queue=msg_queue,
-            data_config=data_config, feature_config=feature_config,
+            comm=comm, rank=rank, msg_queue=msg_queue,
+            data_rank=data_rank, data_config=data_config, feature_config=feature_config,
             **runner_kwargs
         )
         runners.append(runner)
-    print(runner_kwargs.get("eager_mode", False))
-    if args.eager_mode or runner_kwargs.get("eager_mode", False):
+        
+    eager_mode = runner_kwargs.get("eager_mode", False)
+    print('eager_mode:', eager_mode)
+    if args.eager_mode or eager_mode:
         batch_runners.append(runners)
     else:
         batch_runners[0].extend(runners)

@@ -8,7 +8,7 @@ from py_cache_emu import torch_utils as  ptu
 
 
 class TemperatureModel(nn.Module):
-    def __init__(self, log_tau, min_entropy, tau_lr=3e-4, log_tau_clip=(-4, 1), **kwargs):
+    def __init__(self, log_tau, min_entropy, tau_lr=3e-4, log_tau_clip=(-2, 3), **kwargs):
         super(TemperatureModel, self).__init__()
         
         self.min_entropy = min_entropy
@@ -48,7 +48,7 @@ class TemperatureModel(nn.Module):
 
 
 class KDWeights(nn.Module):
-    def __init__(self, num_agents, kdw_lr=3e-4, kwd_log_tau=-1, min_entropy_ratio=0.98, **kwargs):
+    def __init__(self, num_agents, kdw_lr=3e-4, kwd_log_tau=0, min_entropy_ratio=0.95, **kwargs):
         super(KDWeights, self).__init__()
         self.num_agents = num_agents
         self.lr = kdw_lr
@@ -58,12 +58,7 @@ class KDWeights(nn.Module):
                                     **kwargs)
         
         self.kd_mode = int(kwargs.get("kd_mode", 0))
-        self.ws = ptu.ones(num_agents, dtype=torch.float)
-        if self.kd_mode == 2:  # adaptive
-            self.ws = nn.Parameter(self.ws + 1e-3 * ptu.randn(num_agents, dtype=torch.float), requires_grad=True)
-        else:  # fixed
-            self.ws = nn.Parameter(self.ws, requires_grad=True)
-        
+        self.ws = nn.Parameter(ptu.ones(num_agents, dtype=torch.float), requires_grad=True)
         self.optim = torch.optim.Adam([self.ws], lr=self.lr)
     
     def forward(self, losses: list, k=0):
@@ -75,13 +70,10 @@ class KDWeights(nn.Module):
         
         ws_sm = (self.ws / self.tau.value().detach()).softmax(dim=0)
         
+        for idx in indices:
+            loss = loss + losses[idx] * ws_sm[idx]
         if self.kd_mode == 2:
-            for idx in indices:
-                loss = loss + losses[idx] * ws_sm[idx]
             self.tau.backward(ws_sm)
-        else:
-            for idx in indices:
-                loss = loss + losses[idx]
         
         return loss / k
     
@@ -98,10 +90,18 @@ class KDWeights(nn.Module):
         return {"KDW{}".format(i): w for i, w in enumerate(softmax_ws)}
     
     def save_weights(self, path, prefix="", suffix=""):
+        if self.kd_mode == 2:
+            prefix += "adaptive_"
+        elif self.kd_mode == 1:
+            prefix += "fixed_"
         suffix = "-" + str(self.num_agents) + suffix
         ptu.save_model(self, os.path.join(path, prefix + "kd_weights" + suffix + ".pt"))
     
     def load_weights(self, path, prefix="", suffix=""):
+        if self.kd_mode == 2:
+            prefix += "adaptive_"
+        elif self.kd_mode == 1:
+            prefix += "fixed_"
         suffix = "-" + str(self.num_agents) + suffix
         res = ptu.load_model(self, os.path.join(path, prefix + "kd_weights" + suffix + ".pt"))
         return res

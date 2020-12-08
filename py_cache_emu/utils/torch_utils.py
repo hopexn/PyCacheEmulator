@@ -116,7 +116,7 @@ def to_catagorical(data, num_classes):
     return torch.eye(num_classes, dtype=torch.bool)[data].to(device)
 
 
-def save_model(model, path):
+def save_model(model: torch.nn.Module, path):
     torch.save(model.state_dict(), path)
 
 

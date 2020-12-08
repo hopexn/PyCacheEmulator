@@ -9,7 +9,7 @@ class CacheRunner(mp.Process):
     def __init__(self, capacity, data_config, feature_config, **kwargs):
         super().__init__()
         
-        self.capacity = capacity if not isinstance(capacity, list) else capacity[kwargs.get('rank', 0)]
+        self.capacity = capacity if not isinstance(capacity, list) else capacity[kwargs.get('rank', 0) % len(capacity)]
         self.data_config = data_config
         self.feature_config = feature_config
         

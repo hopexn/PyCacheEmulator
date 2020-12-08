@@ -1,0 +1,6 @@
+- [ RlCacheRunner,{ kd_mode: 2 } ]
+- [ RlCacheRunner,{ kd_mode: 1 } ]
+- [ RlCacheRunner,{ kd_mode: 0 } ]
+- [ LruCacheRunner,{ } ]
+- [ LfuCacheRunner,{ } ]
+- [ OgdOptCacheRunner,{ } ]

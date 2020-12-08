@@ -5,30 +5,20 @@ import torch.nn.functional as F
 
 from py_cache_emu import Callback
 from py_cache_emu import torch_utils as ptu
-from py_cache_emu.utils import log_utils
-from py_cache_emu.utils import mp_utils as mpu
+from py_cache_emu.utils import log_utils, proj_utils
 from .ewdrl import RLModel
 from .kd_model import KDWeights
 
 
 class HardKDCallback(Callback):
-    def __init__(self, model, memory,
-                 batch_size=128, interval=10, lr=0.001, sigma=1e-3, weights_path=None,
-                 n_neighbors=0, **kwargs):
+    def __init__(self, model, memory, comm,
+                 batch_size=128, interval=10, sigma=1e-3, n_neighbors=0, **kwargs):
         super().__init__(interval=interval)
         
         self.model: RLModel = model
         self.memory = memory
+        self.comm = comm
         
-        self.batch_size = batch_size
-        self.weights_path = None
-        if weights_path is not None:
-            self.weights_path = os.path.expanduser(weights_path) + str(kwargs.get("rank", 0))
-            os.system("mkdir -p {}".format(self.weights_path))
-        
-        self.ws: KDWeights = KDWeights(mpu.comm_size, lr, **kwargs)
-        
-        self.loss_fn = F.mse_loss
         self.n_neighbors = n_neighbors
         self.sigma = sigma
         
@@ -37,6 +27,18 @@ class HardKDCallback(Callback):
         self.main_tag = kwargs.get("main_tag", "")
         self.sub_tag = kwargs.get("sub_tag", "")
         self.verbose = kwargs.get("verbose", False)
+        
+        self.batch_size = batch_size
+        self.weights_path = kwargs.get("weights_path", "~/default_weights/")
+        if self.weights_path is not None:
+            self.weights_path = os.path.join(
+                os.path.expanduser(self.weights_path),
+                "{}_{}".format(self.rank, proj_utils.seed)
+            )
+            os.system("mkdir -p {}".format(self.weights_path))
+        
+        self.ws: KDWeights = KDWeights(self.comm.comm_size, **kwargs)
+        self.loss_fn = F.mse_loss
     
     def write_ws(self, **kwargs):
         if self.i_episode % 100 == 0:
@@ -49,12 +51,12 @@ class HardKDCallback(Callback):
     
     def on_game_begin(self, **kwargs):
         if self.weights_path is not None:
-            res = self.ws.load_weights(self.weights_path, suffix="_{}".format(mpu.comm_size))
+            res = self.ws.load_weights(self.weights_path)
             return {"load_kd_weights": res}
     
     def on_game_end(self, **kwargs):
         if self.weights_path is not None:
-            self.ws.save_weights(self.weights_path, suffix="_{}".format(mpu.comm_size))
+            self.ws.save_weights(self.weights_path)
     
     def on_episode_end(self, **kwargs):
         sample_ipts = self.memory.sample_kd_samples(self.batch_size)
@@ -64,8 +66,8 @@ class HardKDCallback(Callback):
             with torch.no_grad():
                 sample_ipts += self.sigma * torch.randn_like(sample_ipts)
                 sample_opts = self.model.forward_distilling(sample_ipts)
-        sample_ipts_list = mpu.all_to_all(ptu.get_numpy(sample_ipts), self.rank)
-        sample_opts_list = mpu.all_to_all(ptu.get_numpy(sample_opts), self.rank)
+        sample_ipts_list = self.comm.all_to_all(ptu.get_numpy(sample_ipts), self.rank)
+        sample_opts_list = self.comm.all_to_all(ptu.get_numpy(sample_opts), self.rank)
         losses = []
         for i, (sample_ipts, sample_opts) in enumerate(zip(sample_ipts_list, sample_opts_list)):
             loss = ptu.float_tensor(0, requires_grad=True)
@@ -90,8 +92,8 @@ class HardKDCallback(Callback):
 
 class SoftKDCallback(HardKDCallback):
     def __init__(self, model, memory, batch_size=128, interval=10, lr=0.001, sigma=1e-2,
-                 weights_path=None, n_neighbors=0, kd_tau=1.0, use_kl_div_loss=True, **kwargs):
-        super().__init__(model, memory, batch_size, interval, lr, sigma, weights_path, n_neighbors, **kwargs)
+                 n_neighbors=0, kd_tau=1.0, use_kl_div_loss=True, **kwargs):
+        super().__init__(model, memory, batch_size, interval, lr, sigma, n_neighbors, **kwargs)
         
         self.loss_fn = self.my_loss_func
         self.use_kl_div_loss = use_kl_div_loss

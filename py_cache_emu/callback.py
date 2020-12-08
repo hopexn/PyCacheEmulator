@@ -88,6 +88,9 @@ class LogCallback(Callback):
         self.total_hit_cnt = 0
         self.total_req_cnt = 0
         
+        self.episode_hit_cnts = []
+        self.episode_req_cnts = []
+        
         log_utils.init(**kwargs)
     
     def on_step_end(self, slice_hit_cnt=0, slice_req_cnt=0, **kwargs):
@@ -99,21 +102,31 @@ class LogCallback(Callback):
         super().on_step_end(**kwargs)
     
     def on_episode_end(self, **kwargs):
+        self.episode_hit_cnts.append(self.episode_hit_cnt)
+        self.episode_req_cnts.append(self.episode_req_cnt)
+        
         episode_hit_rate = self.episode_hit_cnt / (self.episode_req_cnt + 1e-6)
+        mean_hit_rate50 = sum(self.episode_hit_cnts[-50:]) / (sum(self.episode_req_cnts[-50:]) + 1e-6)
         mean_hit_rate = self.total_hit_cnt / (self.total_req_cnt + 1e-6)
-        log_utils.write_scalars("EHR/{}".format(self.main_tag),
-                                {self.sub_tag: episode_hit_rate},
-                                self.i_episode, self.verbose)
-        log_utils.write_scalars("MHR/{}".format(self.main_tag),
+        
+        log_utils.write_scalars("0.MHR/{}".format(self.main_tag),
                                 {self.sub_tag: mean_hit_rate},
+                                self.i_episode, self.verbose)
+        log_utils.write_scalars("1.MHR50/{}".format(self.main_tag),
+                                {self.sub_tag: mean_hit_rate50},
+                                self.i_episode, self.verbose)
+        log_utils.write_scalars("2.EHR/{}".format(self.main_tag),
+                                {self.sub_tag: episode_hit_rate},
                                 self.i_episode, self.verbose)
         self.episode_hit_cnt = 0
         self.episode_req_cnt = 0
     
     def on_game_end(self, **kwargs):
         mean_hit_rate = self.total_hit_cnt / (self.total_req_cnt + 1e-6)
+        mean_hit_rate50 = sum(self.episode_hit_cnts[-50:]) / (sum(self.episode_req_cnts[-50:]) + 1e-6)
         return {
-            "mean_hit_rate": "{:.1f}%".format(mean_hit_rate * 100),
-            "total_hit_cnt": str(self.total_hit_cnt),
-            "total_req_cnt": str(self.total_req_cnt)
+            "mean_hit_rate"  : "{:.1f}%".format(mean_hit_rate * 100),
+            "mean_hit_rate50": "{:.1f}%".format(mean_hit_rate50 * 100),
+            "total_hit_cnt"  : str(self.total_hit_cnt),
+            "total_req_cnt"  : str(self.total_req_cnt)
         }
