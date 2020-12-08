@@ -8,7 +8,7 @@ from py_cache_emu import torch_utils as  ptu
 
 
 class TemperatureModel(nn.Module):
-    def __init__(self, log_tau, min_entropy, tau_lr=3e-4, log_tau_clip=(-2, 3), **kwargs):
+    def __init__(self, log_tau, min_entropy, tau_lr=3e-4, log_tau_clip=(-4, 3), **kwargs):
         super(TemperatureModel, self).__init__()
         
         self.min_entropy = min_entropy
@@ -48,7 +48,7 @@ class TemperatureModel(nn.Module):
 
 
 class KDWeights(nn.Module):
-    def __init__(self, num_agents, kdw_lr=3e-4, kwd_log_tau=0, min_entropy_ratio=0.95, **kwargs):
+    def __init__(self, num_agents, kdw_lr=3e-4, kwd_log_tau=0, min_entropy_ratio=0.98, **kwargs):
         super(KDWeights, self).__init__()
         self.num_agents = num_agents
         self.lr = kdw_lr
@@ -60,30 +60,62 @@ class KDWeights(nn.Module):
         self.kd_mode = int(kwargs.get("kd_mode", 0))
         self.ws = nn.Parameter(ptu.ones(num_agents, dtype=torch.float), requires_grad=True)
         self.optim = torch.optim.Adam([self.ws], lr=self.lr)
+        self.ws_sm = None
     
     def forward(self, losses: list, k=0):
         k = self.num_agents if k <= 0 else k
         k = min(k, self.num_agents)
+        self.ws_sm = (self.ws / self.tau.value().detach()).softmax(dim=0)
         
-        indices = np.random.permutation(np.arange(self.num_agents))[:k]
+        indices = np.random.choice(
+            np.arange(self.num_agents), k,
+            replace=False, p=ptu.get_numpy(self.ws_sm)
+        )
+        
         loss = ptu.float_tensor(0, requires_grad=True)
+        loss_ws = ptu.float_tensor(0, requires_grad=True)
         
-        ws_sm = (self.ws / self.tau.value().detach()).softmax(dim=0)
-        
-        for idx in indices:
-            loss = loss + losses[idx] * ws_sm[idx]
-        if self.kd_mode == 2:
-            self.tau.backward(ws_sm)
+        if self.kd_mode == 1:
+            for idx in indices:
+                loss = loss + losses[idx] * self.ws_sm[idx]
+        elif self.kd_mode == 2:
+            for idx in indices:
+                loss = loss + losses[idx] * self.ws_sm[idx]
+        elif self.kd_mode == 3:
+            for idx in indices:
+                loss = loss + losses[idx]
+                exp_minus_loss = (-losses[idx].detach()).exp().detach()
+                loss_ws = loss_ws + self.ws_sm[idx].log() * exp_minus_loss
+            
+            loss = loss + loss_ws
         
         return loss / k
     
+    # def forward(self, losses: list, k=0):
+    #     # Backup
+    #     k = self.num_agents if k <= 0 else k
+    #     k = min(k, self.num_agents)
+    #
+    #     indices = np.random.permutation(np.arange(self.num_agents))[:k]
+    #     loss = ptu.float_tensor(0, requires_grad=True)
+    #
+    #     ws_sm = (self.ws / self.tau.value().detach()).softmax(dim=0)
+    #
+    #     for idx in indices:
+    #         loss = loss + losses[idx] * ws_sm[idx]
+    #     if self.kd_mode == 2:
+    #         self.tau.backward(ws_sm)
+    #
+    #     return loss / k
+    
     def zero_grad(self):
-        if self.kd_mode == 2:
+        if self.kd_mode > 1:
             self.optim.zero_grad()
     
     def step(self):
-        if self.kd_mode == 2:
+        if self.kd_mode > 1:
             self.optim.step()
+            self.tau.backward(self.ws_sm)
     
     def get_dict(self):
         softmax_ws = ptu.get_numpy((self.ws / self.tau.value()).softmax(dim=0))

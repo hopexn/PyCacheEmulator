@@ -3,7 +3,6 @@ import torch
 from py_cache_emu import ListWiseCacheEnv
 from py_cache_emu import torch_utils as ptu
 from py_cache_emu.runners import CacheRunner
-from py_cache_emu.utils import mp_utils as mpu
 from . import config
 from .ewdrl import eval_agent_class
 from .kd_callback import eval_callback_class
@@ -27,6 +26,8 @@ class RlCacheRunner(CacheRunner):
             self.sub_tag += "_kd_fixed"
         elif self.kd_mode == 2:
             self.sub_tag += "_kd_adaptive"
+        elif self.kd_mode == 3:
+            self.sub_tag += "_kd_adaptive2"
         
         # 初始化变量
         self.observation = None

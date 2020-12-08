@@ -30,6 +30,7 @@ class HardKDCallback(Callback):
         
         self.batch_size = batch_size
         self.weights_path = kwargs.get("weights_path", "~/default_weights/")
+        # self.weights_path = kwargs.get("weights_path", None)
         if self.weights_path is not None:
             self.weights_path = os.path.join(
                 os.path.expanduser(self.weights_path),
