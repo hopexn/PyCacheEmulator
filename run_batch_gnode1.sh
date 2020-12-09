@@ -50,10 +50,19 @@ project_root=~/PyCacheEmulator
 #python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 1000 --n_neighbors=0 -l 3625 -e --seed=2
 #python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 2000 --n_neighbors=0 -l 3626 -e --seed=2
 
-python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=0 -l 8010 --seed=1
-python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=1 -l 8011 --seed=1
-python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=2 -l 8012 --seed=1
-python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=3 -l 8013 --seed=1
-python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=4 -l 8014 --seed=1
-python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=5 -l 8015 --seed=1
-python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=6 -l 8016 --seed=1
+#python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 10 --n_neighbors=0 -l 9010 --seed=1
+#python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 10 --n_neighbors=1 -l 9011 --seed=1
+#python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 10 --n_neighbors=2 -l 9012 --seed=1
+#python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 10 --n_neighbors=3 -l 9013 --seed=1
+#python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 10 --n_neighbors=4 -l 9014 --seed=1
+#python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 10 --n_neighbors=5 -l 9015 --seed=1
+#python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 10 --n_neighbors=6 -l 9016 --seed=1
+#python $project_root/run_cache.py ewdrl_iqiyi12.yaml --capacity 10 --n_neighbors=7 -l 9017 --seed=1
+
+python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=0 -l 19010 --seed=1
+python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=1 -l 19011 --seed=1
+python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=2 -l 19012 --seed=1
+python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=3 -l 19013 --seed=1
+python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=4 -l 19014 --seed=1
+python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=5 -l 19015 --seed=1
+python $project_root/run_cache.py ewdrl_iqiyi_pois.yaml --capacity 10 --n_neighbors=6 -l 19016 --seed=1
