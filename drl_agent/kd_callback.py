@@ -7,19 +7,18 @@ from py_cache_emu import Callback
 from py_cache_emu import torch_utils as ptu
 from py_cache_emu.utils import log_utils, proj_utils
 from .ewdrl import RLModel
-from .kd_model import KDWeights
+from .kd import eval_kd_mode
 
 
 class HardKDCallback(Callback):
     def __init__(self, model, memory, comm,
-                 batch_size=128, interval=10, sigma=1e-4, n_neighbors=0, **kwargs):
+                 batch_size=128, interval=10, sigma=1e-4, **kwargs):
         super().__init__(interval=interval, **kwargs)
         
         self.model: RLModel = model
         self.memory = memory
         self.comm = comm
         
-        self.n_neighbors = n_neighbors
         self.sigma = sigma
         
         self.kd_mode = int(kwargs.get("kd_mode", 0))
@@ -31,7 +30,6 @@ class HardKDCallback(Callback):
         self.batch_size = batch_size
         self.weights_path = kwargs.get("weights_path", "~/default_weights/")
         self.weights_path += kwargs.get("weights_id", "0000")
-        # self.weights_path = kwargs.get("weights_path", None)
         if self.weights_path is not None:
             self.weights_path = os.path.join(
                 os.path.expanduser(self.weights_path),
@@ -39,7 +37,8 @@ class HardKDCallback(Callback):
             )
             os.system("mkdir -p {}".format(self.weights_path))
         
-        self.ws: KDWeights = KDWeights(self.comm.comm_size, n_neighbors=n_neighbors, **kwargs)
+        kd_class = eval_kd_mode(self.kd_mode)
+        self.ws = kd_class(self.comm.comm_size, **kwargs)
         self.loss_fn = F.mse_loss
         
         self.episode_hit_cnt = 0
@@ -99,10 +98,10 @@ class HardKDCallback(Callback):
             if len(sample_ipts) > 0:
                 preds = self.model.forward_distilling(ptu.from_numpy(sample_ipts))
                 loss = self.loss_fn(preds, ptu.from_numpy(sample_opts))
-            losses.append(loss)
+            losses.append(loss.unsqueeze(0))
         
         # 更新权重, 更新模型
-        loss = self.ws.forward(losses, reward=reward)
+        loss = self.ws.forward(torch.cat(losses), reward=reward)
         
         self.ws.zero_grad()
         self.model.zero_grad()

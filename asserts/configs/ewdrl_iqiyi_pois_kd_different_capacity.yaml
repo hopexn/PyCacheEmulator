@@ -27,8 +27,10 @@ kd_config:
 # min_entropy_ratio: 0.8
 # kwd_log_tau
 
-log_id: "50011"
+log_id: "50013"
 weights_id: "0003"
 comm_size: 7
 data_permute: false
-n_neighbors: 7
+n_neighbors: 0
+load_weights: False
+tmp_save: True

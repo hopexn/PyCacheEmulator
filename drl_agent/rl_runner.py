@@ -22,12 +22,8 @@ class RlCacheRunner(CacheRunner):
         # 是否启用蒸馏
         self.kd_mode = int(kwargs.get("kd_mode", 0))
         self.sub_tag = self.agent_class_name
-        if self.kd_mode == 1:
-            self.sub_tag += "_kd_fixed"
-        elif self.kd_mode == 2:
-            self.sub_tag += "_kd_adaptive"
-        elif self.kd_mode == 3:
-            self.sub_tag += "_kd_adaptive2"
+        if self.kd_mode > 0:
+            self.sub_tag += "_kd{}".format(self.kd_mode)
         
         # 初始化变量
         self.observation = None
