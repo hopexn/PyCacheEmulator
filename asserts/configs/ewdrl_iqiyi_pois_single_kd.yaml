@@ -15,7 +15,7 @@ agent_config:
   memory_size: 5000
   batch_size: 64
 kd_config:
-  class_name: SoftKDCallback
+#  class_name: SoftKDCallback
   interval: 20
 
 log_id: "0302"

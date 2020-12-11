@@ -45,7 +45,6 @@ class RequestLoader:
         self.content_ids = self.data["content_id"].to_numpy(dtype=np.int)
         
         self.sparsity = kwargs.get("sparsity", 1.0)
-        self.sparsity2 = kwargs.get("sparsity2", 1.0)
         self._slices = self._slice_by_time(self.timestamps, self.content_ids,
                                            time_beg, time_end, time_int,
                                            self.sparsity)
@@ -76,7 +75,7 @@ class RequestLoader:
             slices.append(RequestSlice(
                 timestamps=timestamps[ptr_beg:ptr_end],
                 content_ids=content_ids[ptr_beg:ptr_end],
-                sparsity=sparsity if np.random.random() <= self.sparsity2 else 1.0
+                sparsity=sparsity
             ))
             ptr_beg = ptr_end
             last_time = next_time
@@ -91,7 +90,6 @@ class RequestLoader:
         
         req_slice = self._slices[self.i_slice]
         self.i_slice += 1
-        
         return req_slice
     
     def get_max_contents(self):

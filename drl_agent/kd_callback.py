@@ -12,8 +12,8 @@ from .kd_model import KDWeights
 
 class HardKDCallback(Callback):
     def __init__(self, model, memory, comm,
-                 batch_size=128, interval=10, sigma=1e-3, n_neighbors=0, **kwargs):
-        super().__init__(interval=interval)
+                 batch_size=128, interval=10, sigma=1e-4, n_neighbors=0, **kwargs):
+        super().__init__(interval=interval, **kwargs)
         
         self.model: RLModel = model
         self.memory = memory
@@ -30,6 +30,7 @@ class HardKDCallback(Callback):
         
         self.batch_size = batch_size
         self.weights_path = kwargs.get("weights_path", "~/default_weights/")
+        self.weights_path += kwargs.get("weights_id", "0000")
         # self.weights_path = kwargs.get("weights_path", None)
         if self.weights_path is not None:
             self.weights_path = os.path.join(
@@ -38,8 +39,11 @@ class HardKDCallback(Callback):
             )
             os.system("mkdir -p {}".format(self.weights_path))
         
-        self.ws: KDWeights = KDWeights(self.comm.comm_size, **kwargs)
+        self.ws: KDWeights = KDWeights(self.comm.comm_size, n_neighbors=n_neighbors, **kwargs)
         self.loss_fn = F.mse_loss
+        
+        self.episode_hit_cnt = 0
+        self.episode_req_cnt = 0
     
     def write_ws(self, **kwargs):
         if self.i_episode % 100 == 0:
@@ -47,19 +51,39 @@ class HardKDCallback(Callback):
             log_utils.write_scalars("{}/{}".format(self.main_tag, self.sub_tag),
                                     self.ws.get_dict(), global_step, self.verbose)
     
+    def write_episode_reward(self, eps_reward):
+        if self.i_episode % 100 == 0:
+            global_step = self.i_episode / 100
+            log_utils.write_scalar("{}/{}/REWARD".format(self.main_tag, self.sub_tag), eps_reward, global_step,
+                                   self.verbose)
+    
     def get_models(self, **kwargs):
         return [self.ws]
     
     def on_game_begin(self, **kwargs):
-        if self.weights_path is not None:
+        if self.weights_path is not None and self.kwargs.get("load_weights", True):
             res = self.ws.load_weights(self.weights_path)
+            if res:
+                print("Load ref weights successfully: {}".format(self.weights_path))
             return {"load_kd_weights": res}
     
     def on_game_end(self, **kwargs):
         if self.weights_path is not None:
             self.ws.save_weights(self.weights_path)
     
+    def on_step_end(self, slice_hit_cnt=0, slice_req_cnt=0, **kwargs):
+        self.episode_hit_cnt += slice_hit_cnt
+        self.episode_req_cnt += slice_req_cnt
+        
+        super().on_step_end(**kwargs)
+    
     def on_episode_end(self, **kwargs):
+        reward = self.episode_hit_cnt / (self.episode_req_cnt + 1e-6)
+        # self.write_episode_reward(reward)
+        
+        self.episode_hit_cnt = 0
+        self.episode_req_cnt = 0
+        
         sample_ipts = self.memory.sample_kd_samples(self.batch_size)
         if sample_ipts is None or len(sample_ipts) == 0:
             sample_ipts, sample_opts = ptu.tensor([]), ptu.tensor([])
@@ -78,7 +102,7 @@ class HardKDCallback(Callback):
             losses.append(loss)
         
         # 更新权重, 更新模型
-        loss = self.ws.forward(losses, self.n_neighbors)
+        loss = self.ws.forward(losses, reward=reward)
         
         self.ws.zero_grad()
         self.model.zero_grad()
@@ -87,6 +111,10 @@ class HardKDCallback(Callback):
         self.ws.step()
         
         self.write_ws()
+        
+        if (self.i_episode + 1) % 100 == 0 and self.kwargs.get("tmp_save", False):
+            self.ws.save_weights(self.weights_path)
+            self.model.save_weights(self.weights_path)
         
         return {"kd_loss": loss.cpu().item()}
 

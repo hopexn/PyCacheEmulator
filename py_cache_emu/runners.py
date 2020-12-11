@@ -61,6 +61,7 @@ class CacheRunner(mp.Process):
                             data_config=self.data_config, feature_config=self.feature_config,
                             main_tag=self.main_tag, sub_tag=self.sub_tag,
                             **self.kwargs)
+        self.env.reset()
     
     def on_run_end(self, **kwargs):
         pass

@@ -50,6 +50,8 @@ class CacheEnv(gym.Env):
             self.cache.store(i)
         
         self.req_slice = self.loader.next_slice()
+
+        self.callback_manager.on_game_begin()
         
         return self._get_observation()
     

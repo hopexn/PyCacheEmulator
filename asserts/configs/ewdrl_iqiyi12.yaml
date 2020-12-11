@@ -19,7 +19,10 @@ kd_config:
 #  class_name: SoftKDCallback
   interval: 20
 
-log_id: "2013"
-n_neighbors: 0
-sparsity: 0.5
+log_id: "3028"
+weights_id: "0002"
+n_neighbors: 1
+sparsity: 1.0
 sparsity2: 1.0
+load_weights: True
+tmp_save: True
