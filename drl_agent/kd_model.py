@@ -100,7 +100,7 @@ class KDWeights(nn.Module):
             
             self.last_reward = ptu.float_tensor(kwargs.get('reward', 0)).unsqueeze(0)
             self.last_observation = self.observation
-            self.observation = torch.cat([losses.softmax(dim=-1).detach(), loss.detach()], dim=-1).unsqueeze(0)
+            self.observation = torch.cat([losses.detach(), loss.detach()], dim=-1).unsqueeze(0)
             self.last_action = indices.unsqueeze(0)
         
         return loss + self.alpha * (ws_sm * ws_sm.log()).mean()
