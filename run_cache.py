@@ -31,6 +31,7 @@ args, unkown_args = parser.parse_known_args()
 
 # 手动设置种子
 proj_utils.manual_seed(args.seed)
+print("seed: {}".format(args.seed))
 
 # 根目录路径
 config = proj_utils.load_config(args.config_path)

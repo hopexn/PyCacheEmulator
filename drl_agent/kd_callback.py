@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 from py_cache_emu import Callback
 from py_cache_emu import torch_utils as ptu
-from py_cache_emu.utils import log_utils, proj_utils
+from py_cache_emu.utils import log_utils
 from .ewdrl import RLModel
 from .kd import eval_kd_mode
 
@@ -23,6 +23,7 @@ class HardKDCallback(Callback):
         
         self.kd_mode = int(kwargs.get("kd_mode", 0))
         self.rank = int(kwargs.get("rank", 0))
+        self.data_rank = int(kwargs.get("data_rank", 0))
         self.main_tag = kwargs.get("main_tag", "")
         self.sub_tag = kwargs.get("sub_tag", "")
         self.verbose = kwargs.get("verbose", False)
@@ -33,7 +34,7 @@ class HardKDCallback(Callback):
         if self.weights_path is not None:
             self.weights_path = os.path.join(
                 os.path.expanduser(self.weights_path),
-                "{}_{}".format(self.rank, proj_utils.seed)
+                "{}".format(self.data_rank)
             )
             os.system("mkdir -p {}".format(self.weights_path))
         
@@ -62,8 +63,6 @@ class HardKDCallback(Callback):
     def on_game_begin(self, **kwargs):
         if self.weights_path is not None and self.kwargs.get("load_weights", True):
             res = self.ws.load_weights(self.weights_path)
-            if res:
-                print("Load ref weights successfully: {}".format(self.weights_path))
             return {"load_kd_weights": res}
     
     def on_game_end(self, **kwargs):
@@ -78,19 +77,26 @@ class HardKDCallback(Callback):
     
     def on_episode_end(self, **kwargs):
         reward = self.episode_hit_cnt / (self.episode_req_cnt + 1e-6)
+        reward = ptu.float_tensor(reward).unsqueeze(0)
+        
         # self.write_episode_reward(reward)
         
         self.episode_hit_cnt = 0
         self.episode_req_cnt = 0
         
-        sample_ipts = self.memory.sample_kd_samples(self.batch_size)
+        sample_ipts, sample_rewards = self.memory.sample_kd_samples(self.batch_size)
         if sample_ipts is None or len(sample_ipts) == 0:
             sample_ipts, sample_opts = ptu.tensor([]), ptu.tensor([])
+            sample_rewards = ptu.tensor(0).unsqueeze(0)
         else:
             with torch.no_grad():
                 sample_ipts += self.sigma * torch.randn_like(sample_ipts)
                 sample_opts = self.model.forward_distilling(sample_ipts)
+                sample_rewards = sample_rewards.mean().unsqueeze(0)
+        
         sample_ipts_list = self.comm.all_to_all(ptu.get_numpy(sample_ipts), self.rank)
+        sample_rewards_list = self.comm.all_to_all(ptu.get_numpy(sample_rewards), self.rank)
+        rewards_list = self.comm.all_to_all(ptu.get_numpy(reward), self.rank)
         sample_opts_list = self.comm.all_to_all(ptu.get_numpy(sample_opts), self.rank)
         losses = []
         for i, (sample_ipts, sample_opts) in enumerate(zip(sample_ipts_list, sample_opts_list)):
@@ -100,8 +106,11 @@ class HardKDCallback(Callback):
                 loss = self.loss_fn(preds, ptu.from_numpy(sample_opts))
             losses.append(loss.unsqueeze(0))
         
+        sample_rewards_list = ptu.tensor(sample_rewards_list).squeeze(-1)
+        rewards_list = ptu.tensor(rewards_list).squeeze(-1)
         # 更新权重, 更新模型
-        loss = self.ws.forward(torch.cat(losses), reward=reward)
+        loss = self.ws.forward(torch.cat(losses), reward=reward,
+                               rewards=rewards_list, sample_rewards=sample_rewards_list)
         
         self.ws.zero_grad()
         self.model.zero_grad()
@@ -111,17 +120,16 @@ class HardKDCallback(Callback):
         
         self.write_ws()
         
-        if (self.i_episode + 1) % 100 == 0 and self.kwargs.get("tmp_save", False):
+        if (self.i_episode + 1) % 500 == 0 and self.kwargs.get("tmp_save", True):
             self.ws.save_weights(self.weights_path)
-            self.model.save_weights(self.weights_path)
         
         return {"kd_loss": loss.cpu().item()}
 
 
 class SoftKDCallback(HardKDCallback):
-    def __init__(self, model, memory, batch_size=128, interval=10, lr=0.001, sigma=1e-2,
-                 n_neighbors=0, kd_tau=1.0, use_kl_div_loss=True, **kwargs):
-        super().__init__(model, memory, batch_size, interval, lr, sigma, n_neighbors, **kwargs)
+    def __init__(self, model, memory, batch_size=128, interval=10, lr=0.001, sigma=1e-2, kd_tau=1.0,
+                 use_kl_div_loss=True, **kwargs):
+        super().__init__(model, memory, batch_size, interval, lr, sigma, **kwargs)
         
         self.loss_fn = self.my_loss_func
         self.use_kl_div_loss = use_kl_div_loss

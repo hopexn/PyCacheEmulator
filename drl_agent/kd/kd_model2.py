@@ -11,9 +11,12 @@ class KDWeights2(KDWeightsIF):
     def forward(self, losses: torch.tensor, **kwargs):
         self.ref_ws = self.ws.softmax(dim=0)
         
-        self.indices = np.random.permutation(np.arange(self.num_agents))[:self.n_neighbors]
-        # indices = np.random.choice(np.arange(self.num_agents), self.n_neighbors,
-        #                            replace=False, p=ptu.get_numpy(self.ref_ws))
+        if self.random_index:
+            self.indices = np.random.permutation(np.arange(self.num_agents))[:self.n_neighbors]
+        else:
+            self.indices = np.random.choice(np.arange(self.num_agents), self.n_neighbors,
+                                            replace=False, p=ptu.get_numpy(self.ref_ws))
+        
         self.indices = ptu.tensor(self.indices, dtype=torch.long)
         
         losses_selected = losses.index_select(dim=0, index=self.indices)

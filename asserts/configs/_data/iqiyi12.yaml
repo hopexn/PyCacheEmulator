@@ -1,21 +1,28 @@
 name: iqiyi12
-time_beg: 1430668839
+time_beg: 1430870429
 time_end: 1431878382
 time_int: 10
 data_path:
+  - 'asserts/data/iqiyi_pois/A.csv'
+  - 'asserts/data/iqiyi_pois/B.csv'
+  - 'asserts/data/iqiyi_pois/C.csv'
+  - 'asserts/data/iqiyi_pois/F.csv'
+  - 'asserts/data/iqiyi_pois/G.csv'
+  - 'asserts/data/iqiyi_pois/D.csv'
+  - 'asserts/data/iqiyi_pois/E.csv'
   - /home/hpyan/iqiyi/iqiyi_12x12/28
   - /home/hpyan/iqiyi/iqiyi_12x12/5
   - /home/hpyan/iqiyi/iqiyi_12x12/46
-  - /home/hpyan/iqiyi/iqiyi_12x12/35
   - /home/hpyan/iqiyi/iqiyi_12x12/0
-  - /home/hpyan/iqiyi/iqiyi_12x12/1
   - /home/hpyan/iqiyi/iqiyi_12x12/43
   - /home/hpyan/iqiyi/iqiyi_12x12/36
   - /home/hpyan/iqiyi/iqiyi_12x12/2
-  - /home/hpyan/iqiyi/iqiyi_12x12/52
-  - /home/hpyan/iqiyi/iqiyi_12x12/47
-  - /home/hpyan/iqiyi/iqiyi_12x12/13
-  - /home/hpyan/iqiyi/iqiyi_12x12/14
-  - /home/hpyan/iqiyi/iqiyi_12x12/4
-  - /home/hpyan/iqiyi/iqiyi_12x12/51
-  - /home/hpyan/iqiyi/iqiyi_12x12/54
+#  - /home/hpyan/iqiyi/iqiyi_12x12/47
+#  - /home/hpyan/iqiyi/iqiyi_12x12/13
+#  - /home/hpyan/iqiyi/iqiyi_12x12/14
+#  - /home/hpyan/iqiyi/iqiyi_12x12/4
+#  - /home/hpyan/iqiyi/iqiyi_12x12/51
+#  - /home/hpyan/iqiyi/iqiyi_12x12/54
+#  - /home/hpyan/iqiyi/iqiyi_12x12/35
+#  - /home/hpyan/iqiyi/iqiyi_12x12/1
+#  - /home/hpyan/iqiyi/iqiyi_12x12/52

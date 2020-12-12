@@ -54,7 +54,7 @@ class EWDNN(Agent):
         if act_idx < self.content_dim:
             sample = torch.cat([observation[act_idx].unsqueeze(0),
                                 next_observation[act_idx].unsqueeze(0)], dim=0)
-            self.memory.store_kd_sample(sample)
+            self.memory.store_kd_sample(sample, reward[act_idx])
         
         observation = observation[:self.content_dim].unsqueeze(0)
         action = action[:self.content_dim].unsqueeze(0)

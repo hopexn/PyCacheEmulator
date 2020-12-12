@@ -7,7 +7,7 @@ from py_cache_emu import torch_utils as ptu
 
 
 class KDWeightsIF(nn.Module):
-    def __init__(self, num_agents, n_neighbors=0, kdw_lr=3e-3, **kwargs):
+    def __init__(self, num_agents, n_neighbors=0, kdw_lr=3e-4, **kwargs):
         super(KDWeightsIF, self).__init__()
         self.num_agents = num_agents
         self.lr = kdw_lr
@@ -20,6 +20,7 @@ class KDWeightsIF(nn.Module):
         
         self.ref_ws = None
         self.indices = None
+        self.random_index = kwargs.get("random_index", True)
     
     def forward(self, losses: torch.Tensor, **kwargs):
         raise NotImplementedError()
@@ -43,9 +44,13 @@ class KDWeightsIF(nn.Module):
     
     def save_weights(self, path, prefix="", suffix=""):
         prefix, suffix = self.update_prefix_suffix(prefix, suffix)
-        ptu.save_model(self, os.path.join(path, prefix + "kd_weights" + suffix + ".pt"))
+        path = os.path.join(path, prefix + "kd_weights" + suffix + ".pt")
+        ptu.save_model(self, path)
+        print("Weights saved: {}.".format(path))
     
     def load_weights(self, path, prefix="", suffix=""):
         prefix, suffix = self.update_prefix_suffix(prefix, suffix)
-        res = ptu.load_model(self, os.path.join(path, prefix + "kd_weights" + suffix + ".pt"))
+        path = os.path.join(path, prefix + "kd_weights" + suffix + ".pt")
+        res = ptu.load_model(self, path)
+        print("Weights loaded: {}.".format(path))
         return res

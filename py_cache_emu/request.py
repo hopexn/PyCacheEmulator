@@ -1,4 +1,3 @@
-import math
 from math import ceil
 
 import numpy as np
@@ -11,16 +10,10 @@ class RequestSlice:
         assert len(timestamps) == len(content_ids)
         
         n_requests = len(timestamps)
-        self.size = int(math.ceil(n_requests * sparsity))
-        
-        indices = sorted(np.random.choice(
-            np.arange(n_requests),
-            size=self.size,
-            replace=(sparsity > 1.0)))
-        
-        self.timestamps = timestamps[indices]
-        self.content_ids = content_ids[indices]
-        
+        masks = (np.random.random(size=n_requests) <= sparsity)
+        self.timestamps = timestamps[masks]
+        self.content_ids = content_ids[masks]
+        self.size = len(self.timestamps)
         self.ptr = 0
     
     def reset(self):
@@ -68,6 +61,11 @@ class RequestLoader:
         num_slices = int(ceil(float(t_end - t_beg) / t_int))
         ptr_beg, ptr_end = 0, 0
         last_time = t_beg
+        n_reqs = len(timestamps)
+        while ptr_beg < n_reqs and timestamps[ptr_beg] < t_beg:
+            ptr_beg += 1
+        ptr_end = ptr_beg
+        
         for i in range(num_slices):
             next_time = last_time + t_int
             while ptr_end < self.n_requests and self.timestamps[ptr_end] < next_time:
