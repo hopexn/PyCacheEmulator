@@ -3,6 +3,7 @@ import multiprocessing as mp
 import numpy as np
 
 from .envs import CacheEnv
+from .misc.arc import ARC
 
 
 class CacheRunner(mp.Process):
@@ -14,7 +15,7 @@ class CacheRunner(mp.Process):
         self.feature_config = feature_config
         
         self.msg_queue: mp.Queue = kwargs.get("msg_queue", None)
-        self.env = None
+        self.env: CacheEnv = None
         
         self.rank = kwargs.get('rank', 0)
         self.data_rank = kwargs.get('data_rank', 0)
@@ -122,6 +123,32 @@ class OgdLfuCacheRunner(CacheRunner):
     def __init__(self, capacity, data_config, feature_config, **kwargs):
         super(OgdLfuCacheRunner, self).__init__(capacity, data_config, feature_config, **kwargs)
         self.feature_config = {'use_ogd_lfu_feature': True},
+    
+    def forward(self, observation):
+        return np.argmin(observation.flatten())
+
+
+class ArcCacheRunner(CacheRunner):
+    def __init__(self, capacity, data_config, feature_config, **kwargs):
+        super(ArcCacheRunner, self).__init__(capacity, data_config, feature_config, **kwargs)
+        self.arc = ARC(capacity)
+    
+    def run(self, **kwargs):
+        self.on_run_begin(**kwargs)
+        while not self.env.loader.finished():
+            req_slice = self.env.loader.next_slice()
+            while not req_slice.finished():
+                t, cid = req_slice.next()
+                self.arc.re(cid)
+        mean_hit_rate = self.arc.get_hit_ratio()
+        result = {
+            "mean_hit_rate"  : "{:.1f}%".format(mean_hit_rate * 100),
+            "mean_hit_rate50": "{:.1f}%".format(mean_hit_rate * 100),
+            "total_hit_cnt"  : str(self.arc.hit_cnt),
+            "total_req_cnt"  : str(self.arc.req_cnt)
+        }
+        self.msg_queue.put({"{}/{}".format(self.main_tag, self.sub_tag): result})
+        return result
     
     def forward(self, observation):
         return np.argmin(observation.flatten())
