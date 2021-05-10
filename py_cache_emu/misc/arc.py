@@ -63,8 +63,7 @@ class ARC:
                     old = self.T1.pop()
                     self.cache.remove(old)
                     # Case (ii)
-            elif len(self.T1) + len(self.B1) < self.c <= (
-                    len(self.T1) + len(self.B1) + len(self.T2) + len(self.B2)):
+            elif (len(self.T1) + len(self.B1) < self.c) and (len(self.T1) + len(self.B1) + len(self.T2) + len(self.B2)) >= self.c:
                 if (len(self.T1) + len(self.B1) + len(self.T2) + len(self.B2)) == 2 * self.c:
                     self.B2.pop()
                 self.replace(item)
@@ -73,3 +72,4 @@ class ARC:
             self.cache.add(item)
         else:
             print("There is an error.")
+            exit(1)

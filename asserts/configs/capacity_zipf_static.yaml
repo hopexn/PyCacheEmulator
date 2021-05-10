@@ -13,4 +13,4 @@ agent_config:
   memory_size: 5000
   batch_size: 128
 
-log_id: "0001"
+log_id: "90001"

@@ -3,3 +3,4 @@
 - [ LfuCacheRunner,{ } ]
 - [ OgdOptCacheRunner,{ } ]
 - [ RlCacheRunner,{ kd_mode: 0 } ]
+- [ ArcCacheRunner,{ } ]

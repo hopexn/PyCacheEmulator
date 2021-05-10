@@ -23,10 +23,10 @@ kd_config:
 #  class_name: SoftKDCallback
   interval: 20
 
-log_id: "20056"
+log_id: "20058"
 comm_size: 8
 data_permute: True
-n_neighbors: 0
+n_neighbors: 4
 sparsity: 1.0
 load_weights: True
 tmp_save: True

@@ -131,7 +131,7 @@ class OgdLfuCacheRunner(CacheRunner):
 class ArcCacheRunner(CacheRunner):
     def __init__(self, capacity, data_config, feature_config, **kwargs):
         super(ArcCacheRunner, self).__init__(capacity, data_config, feature_config, **kwargs)
-        self.arc = ARC(capacity)
+        self.arc = ARC(self.capacity)
     
     def run(self, **kwargs):
         self.on_run_begin(**kwargs)
@@ -139,7 +139,8 @@ class ArcCacheRunner(CacheRunner):
             req_slice = self.env.loader.next_slice()
             while not req_slice.finished():
                 t, cid = req_slice.next()
-                self.arc.re(cid)
+                self.arc.re(int(cid))
+        
         mean_hit_rate = self.arc.get_hit_ratio()
         result = {
             "mean_hit_rate"  : "{:.1f}%".format(mean_hit_rate * 100),
